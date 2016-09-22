@@ -17,9 +17,9 @@ class WebViewLoadTest: XCTestCase {
      XCTest.measureBlock runs each test 10x.
      */
 
-    private func doTest(shieldsOn shieldsOn: Bool, group: [String]) {
+    fileprivate func doTest(shieldsOn: Bool, group: [String]) {
         WebViewLoadTestUtils.urlProtocolEnabled(shieldsOn)
-        measureBlock({
+        measure({
             WebViewLoadTestUtils.loadSites(self, sites: group)
         })
     }
@@ -54,19 +54,19 @@ class WebViewLoadTest: XCTestCase {
             //WebViewLoadTestUtils.httpseEnabled(shieldsOn)
 
             for site in sites {
-                let webview = BraveWebView(frame: CGRectMake(0,0,200,200), useDesktopUserAgent: false)
+                let webview = BraveWebView(frame: CGRect(x: 0,y: 0,width: 200,height: 200), useDesktopUserAgent: false)
 
                 print("\(site)")
 
                 // prime it
                 //loadSite(site, webview: webview)
 
-                let timeStart = NSDate.timeIntervalSinceReferenceDate()
+                let timeStart = Date.timeIntervalSinceReferenceDate
                 let ok = WebViewLoadTestUtils.loadSite(self, site: site, webview: webview)
                 if !ok {
                     continue
                 }
-                let time = NSDate.timeIntervalSinceReferenceDate() - timeStart
+                let time = Date.timeIntervalSinceReferenceDate - timeStart
 
                 if time < 1 {
                     print("(\(i)) skipping \(site), load too fast \(time)")
@@ -89,7 +89,7 @@ class WebViewLoadTest: XCTestCase {
         var countSitesWithFasterLoad = 0
         var averages = [String: (on: Double, off: Double)]()
         for (site, arrays) in dict {
-            func average(isOn: Bool, arr: [Double]) {
+            func average(_ isOn: Bool, arr: [Double]) {
                 let average = arr.reduce(0.0) { return ($0 + $1) } / Double(arr.count)
                 print("Shields On:\(isOn) \(site) \(average)")
                 if averages[site] == nil {
@@ -130,9 +130,9 @@ class WebViewLoadTest: XCTestCase {
     func testOpenUrlUsingBraveSchema() {
         expectationForNotification(BraveWebViewConstants.kNotificationWebViewLoadCompleteOrFailed, object: nil, handler:nil)
         let site = "google.ca"
-        let ok = UIApplication.sharedApplication().openURL(
-            NSURL(string: "brave://open-url?url=https%253A%252F%252F" + site)!)
-        waitForExpectationsWithTimeout(10, handler: nil)
+        let ok = UIApplication.shared.openURL(
+            URL(string: "brave://open-url?url=https%253A%252F%252F" + site)!)
+        waitForExpectations(timeout: 10, handler: nil)
         XCTAssert(ok, "open url failed for site: \(site)")
     }
 }

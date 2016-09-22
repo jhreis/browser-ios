@@ -4,7 +4,7 @@ import Shared
 private let log = Logger.browserLogger
 
 extension BrowserViewController: TabManagerDelegate {
-    func tabManager(tabManager: TabManager, didSelectedTabChange selected: Browser?) {
+    func tabManager(_ tabManager: TabManager, didSelectedTabChange selected: Browser?) {
         if (urlBar.inOverlayMode) {
             urlBar.leaveOverlayMode()
         }
@@ -32,7 +32,7 @@ extension BrowserViewController: TabManagerDelegate {
             prevWebView.removeFromSuperview()
         }
 
-        if let tab = selected, webView = tab.webView {
+        if let tab = selected, let webView = tab.webView {
             // if we have previously hidden this scrollview in order to make scrollsToTop work then
             // we should ensure that it is not hidden now that it is our foreground scrollView
             //            if webView.scrollView.hidden {
@@ -69,7 +69,7 @@ extension BrowserViewController: TabManagerDelegate {
                     // Indeed, because we don't show the toolbar at all, don't even blank the star.
                 } else {
                     profile.bookmarks.modelFactory >>== {
-                        $0.isBookmarked(url).uponQueue(dispatch_get_main_queue()) {
+                        $0.isBookmarked(url).uponQueue(DispatchQueue.main) {
                             guard let isBookmarked = $0.successValue else {
                                 log.error("Error getting bookmark status: \($0.failureValue).")
                                 return
@@ -115,9 +115,9 @@ extension BrowserViewController: TabManagerDelegate {
         updateInContentHomePanel(selected?.url)
     }
 
-    func tabManager(tabManager: TabManager, didCreateWebView tab: Browser, url: NSURL?) {}
+    func tabManager(_ tabManager: TabManager, didCreateWebView tab: Browser, url: URL?) {}
 
-    func tabManager(tabManager: TabManager, didAddTab tab: Browser) {
+    func tabManager(_ tabManager: TabManager, didAddTab tab: Browser) {
         // If we are restoring tabs then we update the count once at the end
         if !tabManager.isRestoring {
             updateTabCountUsingTabManager(tabManager)
@@ -125,21 +125,21 @@ extension BrowserViewController: TabManagerDelegate {
         tab.browserDelegate = self
     }
 
-    func tabManager(tabManager: TabManager, didRemoveTab tab: Browser) {
+    func tabManager(_ tabManager: TabManager, didRemoveTab tab: Browser) {
         updateTabCountUsingTabManager(tabManager)
         // browserDelegate is a weak ref (and the tab's webView may not be destroyed yet)
         // so we don't expcitly unset it.
     }
 
-    func tabManagerDidAddTabs(tabManager: TabManager) {
+    func tabManagerDidAddTabs(_ tabManager: TabManager) {
         updateTabCountUsingTabManager(tabManager)
     }
 
-    func tabManagerDidRestoreTabs(tabManager: TabManager) {
+    func tabManagerDidRestoreTabs(_ tabManager: TabManager) {
         updateTabCountUsingTabManager(tabManager)
     }
 
-    func updateTabCountUsingTabManager(tabManager: TabManager, animated: Bool = true) {
+    func updateTabCountUsingTabManager(_ tabManager: TabManager, animated: Bool = true) {
         let count = tabManager.tabs.displayedTabsForCurrentPrivateMode.count
         urlBar.updateTabCount(max(count, 1), animated: animated)
     }

@@ -55,33 +55,33 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
 
     override func viewDidLoad() {
         isLeftSidePanel = false
-         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(pageChanged), name: kNotificationPageUnload, object: nil)
+         NotificationCenter.default.addObserver(self, selector: #selector(pageChanged), name: NSNotification.Name(rawValue: kNotificationPageUnload), object: nil)
         super.viewDidLoad()
     }
 
     override func setupContainerViewSize() {
-        var h = max(UIScreen.mainScreen().bounds.height, UIScreen.mainScreen().bounds.width)
+        var h = max(UIScreen.main.bounds.height, UIScreen.main.bounds.width)
         h = min(600, h)
-        containerView.frame = CGRectMake(0, 0, CGFloat(BraveUX.WidthOfSlideOut), h)
-        viewAsScrollView().contentSize = CGSizeMake(containerView.frame.width, containerView.frame.height)
+        containerView.frame = CGRect(x: 0, y: 0, width: CGFloat(BraveUX.WidthOfSlideOut), height: h)
+        viewAsScrollView().contentSize = CGSize(width: containerView.frame.width, height: containerView.frame.height)
     }
 
     @objc func pageChanged() {
         postAsyncToMain(0.4) {
-            if !self.view.hidden {
+            if !self.view.isHidden {
                 self.updateSitenameAndTogglesState()
             }
         }
     }
 
-    private func isTinyScreen() -> Bool{
-        let h = max(UIScreen.mainScreen().bounds.height, UIScreen.mainScreen().bounds.width)
+    fileprivate func isTinyScreen() -> Bool{
+        let h = max(UIScreen.main.bounds.height, UIScreen.main.bounds.width)
         return h < 500
     }
 
-    private func setGrayTextColor(v: UIView) {
+    fileprivate func setGrayTextColor(_ v: UIView) {
         if let label = v as? UILabel {
-            if label.textColor == UIColor.blackColor() {
+            if label.textColor == UIColor.black {
                 label.textColor = UIColor(white: 88/255, alpha: 1.0)
             }
         }
@@ -91,11 +91,11 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
     override func setupUIElements() {
         super.setupUIElements()
 
-        func makeSectionHeaderTitle(title: String, sectionHeight: CGFloat) -> UIView {
+        func makeSectionHeaderTitle(_ title: String, sectionHeight: CGFloat) -> UIView {
             let container = UIView()
             let topTitle = UILabel()
             container.addSubview(topTitle)
-            topTitle.font = UIFont.systemFontOfSize(ui_sectionTitleFontSize)
+            topTitle.font = UIFont.systemFont(ofSize: ui_sectionTitleFontSize)
             topTitle.alpha = 0.6
             topTitle.text = title
             topTitle.snp_makeConstraints { (make) in
@@ -110,7 +110,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
 
         var togglesSectionTitle: UIView? = nil
         let titleSectionHeight = isTinyScreen() ? ui_sectionTitleHeight - 6 : ui_sectionTitleHeight
-        if screenHeightRequiredForSectionHeader < max(UIScreen.mainScreen().bounds.height, UIScreen.mainScreen().bounds.width) {
+        if screenHeightRequiredForSectionHeader < max(UIScreen.main.bounds.height, UIScreen.main.bounds.width) {
             togglesSectionTitle = makeSectionHeaderTitle(NSLocalizedString("Individual Controls", comment: "title for per-site shield toggles"), sectionHeight: titleSectionHeight)
         }
 
@@ -123,7 +123,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         }
         sections.append(togglesContainer)
         sections.forEach { containerView.addSubview($0) }
-        sections.enumerate().forEach { i, section in
+        sections.enumerated().forEach { i, section in
             section.snp_makeConstraints(closure: { (make) in
                 make.left.right.equalTo(section.superview!)
 
@@ -156,7 +156,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         togglesSectionTitle?.backgroundColor = togglesContainer.backgroundColor
 
 
-        viewAsScrollView().scrollEnabled = true
+        viewAsScrollView().isScrollEnabled = true
         viewAsScrollView().bounces = false
 
         view.backgroundColor = togglesContainer.backgroundColor
@@ -166,8 +166,8 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
             headerContainer.addSubview(heading)
 
             heading.text = NSLocalizedString("Site shield settings", comment: "Brave panel topmost title")
-            heading.textColor = UIColor.whiteColor()
-            heading.font = UIFont.boldSystemFontOfSize(18)
+            heading.textColor = UIColor.white
+            heading.font = UIFont.boldSystemFont(ofSize: 18)
 
             heading.snp_makeConstraints { (make) in
                 make.right.equalTo(heading.superview!)
@@ -178,8 +178,8 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         setupHeaderSection()
 
         func setupSiteNameSection() {
-            siteName.font = UIFont.boldSystemFontOfSize(22)
-            siteName.lineBreakMode = NSLineBreakMode.ByTruncatingMiddle
+            siteName.font = UIFont.boldSystemFont(ofSize: 22)
+            siteName.lineBreakMode = NSLineBreakMode.byTruncatingMiddle
             siteName.minimumScaleFactor = 0.75
 
             let down = UILabel()
@@ -199,7 +199,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
             siteName.adjustsFontSizeToFitWidth = true
 
             [down, up].forEach {
-                $0.font = UIFont.boldSystemFontOfSize(14)
+                $0.font = UIFont.boldSystemFont(ofSize: 14)
                 setGrayTextColor($0)
             }
 
@@ -221,7 +221,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
                 make.top.equalTo(shieldToggle.superview!.snp_centerY)
             }
             shieldToggle.onTintColor = BraveUX.BraveOrange
-            shieldToggle.addTarget(self, action: #selector(switchToggled(_:)), forControlEvents: .ValueChanged)
+            shieldToggle.addTarget(self, action: #selector(switchToggled(_:)), for: .valueChanged)
         }
         setupSiteNameSection()
 
@@ -233,7 +233,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
                                NSLocalizedString("Block Scripts", comment: "Brave panel individual toggle title"),
                                NSLocalizedString("Fingerprinting\nProtection", comment: "Brave panel individual toggle title")]
 
-            func layoutSwitch(switchItem: UISwitch, label: UILabel) -> UIView {
+            func layoutSwitch(_ switchItem: UISwitch, label: UILabel) -> UIView {
                 let row = UIView()
                 togglesContainer.addSubview(row)
                 row.addSubview(switchItem)
@@ -253,17 +253,17 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
             }
 
             var rows = [UIView]()
-            for (i, item) in views_toggles.enumerate() {
+            for (i, item) in views_toggles.enumerated() {
                 item.onTintColor = BraveUX.BraveOrange
-                item.addTarget(self, action: #selector(switchToggled(_:)), forControlEvents: .ValueChanged)
+                item.addTarget(self, action: #selector(switchToggled(_:)), for: .valueChanged)
                 views_labels[i].text = labelTitles[i]
-                if UIDevice.currentDevice().userInterfaceIdiom != .Pad {
-                    views_labels[i].font = UIFont.systemFontOfSize(15)
+                if UIDevice.current.userInterfaceIdiom != .pad {
+                    views_labels[i].font = UIFont.systemFont(ofSize: 15)
                 }
                 rows.append(layoutSwitch(item, label: views_labels[i]))
             }
 
-            rows.enumerate().forEach { i, row in
+            rows.enumerated().forEach { i, row in
                 row.snp_remakeConstraints(closure: { (make) in
                     make.left.right.equalTo(row.superview!).inset(ui_edgeInset)
                     if i == 0 {
@@ -282,7 +282,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
                 })
             }
 
-            toggleBlockFingerprintingTitle.lineBreakMode = .ByWordWrapping
+            toggleBlockFingerprintingTitle.lineBreakMode = .byWordWrapping
             toggleBlockFingerprintingTitle.numberOfLines = 2
         }
 
@@ -300,17 +300,17 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
                               UIColor.init(white: 90/255.0, alpha: 1)]
 
             var prevTitle:UIView? = nil
-            for (i, stat) in statViews.enumerate() {
+            for (i, stat) in statViews.enumerated() {
                 let label = UILabel()
                 label.text = statTitles[i]
                 statsContainer.addSubview(label)
                 statsContainer.addSubview(stat)
 
                 stat.text = "0"
-                stat.font = UIFont.boldSystemFontOfSize(28)
+                stat.font = UIFont.boldSystemFont(ofSize: 28)
                 stat.adjustsFontSizeToFitWidth = true
                 stat.textColor = statColors[i]
-                stat.textAlignment = .Right
+                stat.textAlignment = .right
 
                 stat.snp_makeConstraints {
                     make in
@@ -336,8 +336,8 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
 
                 prevTitle = label
 
-                if UIDevice.currentDevice().userInterfaceIdiom != .Pad {
-                    label.font = UIFont.systemFontOfSize(15)
+                if UIDevice.current.userInterfaceIdiom != .pad {
+                    label.font = UIFont.systemFont(ofSize: 15)
                 }
             }
         }
@@ -347,18 +347,18 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         setGrayTextColor(statsContainer)
     }
 
-    @objc func switchToggled(sender: UISwitch) {
+    @objc func switchToggled(_ sender: UISwitch) {
         guard let site = siteName.text else { return }
 
-        func setKeys(globalPrefKey: String, _ globalPrefDefaultValue: Bool, _ siteShieldKey: String) {
+        func setKeys(_ globalPrefKey: String, _ globalPrefDefaultValue: Bool, _ siteShieldKey: String) {
             var state: Bool? = nil
             if siteShieldKey == BraveShieldState.kAllOff {
-                state = !sender.on
+                state = !sender.isOn
             } else {
                 // state matches the prefs setting
                 let pref = BraveApp.getPrefs()?.boolForKey(globalPrefKey) ?? globalPrefDefaultValue
                 if sender.on != pref {
-                    state = sender.on
+                    state = sender.isOn
                 }
             }
 
@@ -386,9 +386,9 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         }
     }
     
-    func toggleInteractionEnabled(enabled: Bool) {
+    func toggleInteractionEnabled(_ enabled: Bool) {
         for toggle: UISwitch in views_toggles {
-            toggle.enabled = enabled
+            toggle.isEnabled = enabled
         }
     }
 
@@ -396,25 +396,25 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         siteName.text = BraveApp.getCurrentWebView()?.URL?.normalizedHost() ?? "-"
 
         let state = BraveShieldState.getStateForDomain(siteName.text ?? "")
-        shieldToggle.on = !(state?.isAllOff() ?? false)
+        shieldToggle.isOn = !(state?.isAllOff() ?? false)
 
-        let masterOn = shieldToggle.on
+        let masterOn = shieldToggle.isOn
         toggleInteractionEnabled(masterOn)
 
         if masterOn {
-            toggleBlockAds.on = state?.isOnAdBlockAndTp() ?? AdBlocker.singleton.isNSPrefEnabled
-            toggleHttpse.on = state?.isOnHTTPSE() ?? HttpsEverywhere.singleton.isNSPrefEnabled
-            toggleBlockMalware.on = state?.isOnSafeBrowsing() ?? SafeBrowsing.singleton.isNSPrefEnabled
+            toggleBlockAds.isOn = state?.isOnAdBlockAndTp() ?? AdBlocker.singleton.isNSPrefEnabled
+            toggleHttpse.isOn = state?.isOnHTTPSE() ?? HttpsEverywhere.singleton.isNSPrefEnabled
+            toggleBlockMalware.isOn = state?.isOnSafeBrowsing() ?? SafeBrowsing.singleton.isNSPrefEnabled
             toggleBlockScripts.on = state?.isOnScriptBlocking() ?? (BraveApp.getPrefs()?.boolForKey(kPrefKeyNoScriptOn) ?? false)
             toggleBlockFingerprinting.on = state?.isOnFingerprintProtection() ?? (BraveApp.getPrefs()?.boolForKey(kPrefKeyFingerprintProtection) ?? false)
         } else {
             for toggle: UISwitch in views_toggles {
-                toggle.on = false
+                toggle.isOn = false
             }
         }
     }
 
-    override func showPanel(showing: Bool, parentSideConstraints: [Constraint?]?) {
+    override func showPanel(_ showing: Bool, parentSideConstraints: [Constraint?]?) {
         if showing {
             updateSitenameAndTogglesState()
         }
@@ -429,7 +429,7 @@ class BraveRightSidePanelViewController : SidePanelBaseViewController {
         }
     }
 
-    func setShieldBlockedStats(shieldStats: ShieldBlockedStats) {
+    func setShieldBlockedStats(_ shieldStats: ShieldBlockedStats) {
         statAdsBlocked.text = String(shieldStats.abAndTp)
         statHttpsUpgrades.text = String(shieldStats.httpse)
         statFPBlocked.text = String(shieldStats.fp)

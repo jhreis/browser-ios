@@ -17,8 +17,8 @@ class BlankTargetLinkHandler {
         return getApp().rootViewController.visibleViewController as? BraveTopViewController != nil
     }
 
-    func sendEvent(event: UIEvent, window: UIWindow) {
-        guard let touchView = event.allTouches()?.first?.view, braveWebView = BraveApp.getCurrentWebView() where touchView.isDescendantOfView(braveWebView) else {
+    func sendEvent(_ event: UIEvent, window: UIWindow) {
+        guard let touchView = event.allTouches?.first?.view, let braveWebView = BraveApp.getCurrentWebView() , touchView.isDescendant(of: braveWebView) else {
             return
         }
         
@@ -26,32 +26,32 @@ class BlankTargetLinkHandler {
             return
         }
 
-        if let touches = event.touchesForWindow(window), let touch = touches.first where touches.count == 1 {
-            guard let webView = BraveApp.getCurrentWebView(), webViewSuperview = webView.superview  else { return }
+        if let touches = event.touches(for: window), let touch = touches.first , touches.count == 1 {
+            guard let webView = BraveApp.getCurrentWebView(), let webViewSuperview = webView.superview  else { return }
             if !webView.blankTargetLinkDetectionOn {
                 return
             }
 
-            let globalRect = webViewSuperview.convertRect(webView.frame, toView: nil)
-            if !globalRect.contains(touch.locationInView(window)) {
+            let globalRect = webViewSuperview.convert(webView.frame, to: nil)
+            if !globalRect.contains(touch.location(in: window)) {
                 return
             }
 
             switch touch.phase {
-            case .Began:  // A finger touched the screen
-                let tapLocation = touch.locationInView(window)
+            case .began:  // A finger touched the screen
+                let tapLocation = touch.location(in: window)
                 if let element = ElementAtPoint().getHit(tapLocation),
-                    url = element.url,
-                    t = element.urlTarget where t == "_blank"
+                    let url = element.url,
+                    let t = element.urlTarget , t == "_blank"
                 {
                     webView.urlBlankTargetTapped(url)
                     print("LinkTargetBlankHandler \(element)")
                 }
 
                 break
-            case .Moved, .Stationary:
+            case .moved, .stationary:
                 break
-            case .Ended, .Cancelled:
+            case .ended, .cancelled:
                 break
             }
         }

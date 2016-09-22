@@ -34,11 +34,11 @@ class DeleteExportedDataSetting: HiddenSetting {
         return NSAttributedString(string: "Debug: delete exported databases", attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override func onClick(navigationController: UINavigationController?) {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
-        let fileManager = NSFileManager.defaultManager()
+    override func onClick(_ navigationController: UINavigationController?) {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        let fileManager = FileManager.default
         do {
-            let files = try fileManager.contentsOfDirectoryAtPath(documentsPath)
+            let files = try fileManager.contentsOfDirectory(atPath: documentsPath)
             for file in files {
                 if file.startsWith("browser.") || file.startsWith("logins.") {
                     try fileManager.removeItemInDirectory(documentsPath, named: file)
@@ -56,8 +56,8 @@ class ExportBrowserDataSetting: HiddenSetting {
         return NSAttributedString(string: "Debug: copy databases to app container", attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override func onClick(navigationController: UINavigationController?) {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
+    override func onClick(_ navigationController: UINavigationController?) {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
         do {
             let log = Logger.syncLogger
             try self.settings.profile.files.copyMatching(fromRelativeDirectory: "", toAbsoluteDirectory: documentsPath) { file in
@@ -80,17 +80,17 @@ class VersionSetting : Setting {
     }
 
     override var title: NSAttributedString? {
-        let appVersion = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleShortVersionString") as! String
-        let buildNumber = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleVersion") as! String
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String
+        let buildNumber = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as! String
         return NSAttributedString(string: String(format: NSLocalizedString("Version %@ (%@)", comment: "Version number of Firefox shown in settings"), appVersion, buildNumber), attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override func onConfigureCell(cell: UITableViewCell) {
+    override func onConfigureCell(_ cell: UITableViewCell) {
         super.onConfigureCell(cell)
-        cell.selectionStyle = .None
+        cell.selectionStyle = .none
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         if AppConstants.BuildChannel != .Aurora {
             DebugSettingsClickCount += 1
             if DebugSettingsClickCount >= 5 {
@@ -108,11 +108,11 @@ class LicenseAndAcknowledgementsSetting: Setting {
         return NSAttributedString(string: NSLocalizedString("Licenses", comment: "Settings item that opens a tab containing the licenses. See http://mzl.la/1NSAWCG"), attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override var url: NSURL? {
-        return NSURL(string: WebServer.sharedInstance.URLForResource("license", module: "about"))
+    override var url: URL? {
+        return URL(string: WebServer.sharedInstance.URLForResource("license", module: "about"))
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         setUpAndPushSettingsContentViewController(navigationController)
     }
 }
@@ -124,11 +124,11 @@ class YourRightsSetting: Setting {
             [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override var url: NSURL? {
-        return NSURL(string: "https://www.mozilla.org/about/legal/terms/firefox/")
+    override var url: URL? {
+        return URL(string: "https://www.mozilla.org/about/legal/terms/firefox/")
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         setUpAndPushSettingsContentViewController(navigationController)
     }
 }
@@ -142,9 +142,9 @@ class ShowIntroductionSetting: Setting {
         super.init(title: NSAttributedString(string: NSLocalizedString("Show Tour", comment: "Show the on-boarding screen again from the settings"), attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor]))
     }
 
-    override func onClick(navigationController: UINavigationController?) {
-        navigationController?.dismissViewControllerAnimated(true, completion: {
-            if let appDelegate = UIApplication.sharedApplication().delegate as? AppDelegate {
+    override func onClick(_ navigationController: UINavigationController?) {
+        navigationController?.dismiss(animated: true, completion: {
+            if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
                 appDelegate.browserViewController.presentIntroViewController(true)
             }
         })
@@ -156,23 +156,23 @@ class SendFeedbackSetting: Setting {
         return NSAttributedString(string: NSLocalizedString("Send Feedback", comment: "Show an input.mozilla.org page where people can submit feedback"), attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override var url: NSURL? {
-        let appVersion = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleShortVersionString") as! String
-        return NSURL(string: "https://input.mozilla.org/feedback/fxios/\(appVersion)")
+    override var url: URL? {
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String
+        return URL(string: "https://input.mozilla.org/feedback/fxios/\(appVersion)")
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         setUpAndPushSettingsContentViewController(navigationController)
     }
 }
 
 class SendAnonymousUsageDataSetting: BoolSetting {
     
-    override var url: NSURL? {
+    override var url: URL? {
         return SupportUtils.URLForTopic("adjust")
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         setUpAndPushSettingsContentViewController(navigationController)
     }
 }
@@ -184,9 +184,9 @@ class OpenSupportPageSetting: Setting {
             delegate: delegate)
     }
 
-    override func onClick(navigationController: UINavigationController?) {
-        navigationController?.dismissViewControllerAnimated(true) {
-            if let url = NSURL(string: "https://support.mozilla.org/products/ios") {
+    override func onClick(_ navigationController: UINavigationController?) {
+        navigationController?.dismiss(animated: true) {
+            if let url = URL(string: "https://support.mozilla.org/products/ios") {
                 self.delegate?.settingsOpenURLInNewTab(url)
             }
         }
@@ -197,9 +197,9 @@ class OpenSupportPageSetting: Setting {
 class SearchSetting: Setting {
     let profile: Profile
 
-    override var accessoryType: UITableViewCellAccessoryType { return .DisclosureIndicator }
+    override var accessoryType: UITableViewCellAccessoryType { return .disclosureIndicator }
 
-    override var style: UITableViewCellStyle { return .Value1 }
+    override var style: UITableViewCellStyle { return .value1 }
 
     override var status: NSAttributedString { return NSAttributedString(string: profile.searchEngines.defaultEngine.shortName) }
 
@@ -210,7 +210,7 @@ class SearchSetting: Setting {
         super.init(title: NSAttributedString(string: NSLocalizedString("Default Search Engine", comment: "Open search section of settings"), attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor]))
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         let viewController = SearchSettingsTableViewController()
         viewController.model = profile.searchEngines
         navigationController?.pushViewController(viewController, animated: true)
@@ -222,7 +222,7 @@ class LoginsSetting: Setting {
     ///var tabManager: TabManager!
     weak var navigationController: UINavigationController?
 
-    override var accessoryType: UITableViewCellAccessoryType { return .DisclosureIndicator }
+    override var accessoryType: UITableViewCellAccessoryType { return .disclosureIndicator }
 
     override var accessibilityIdentifier: String? { return "Logins" }
 
@@ -256,7 +256,7 @@ class LoginsSetting: Setting {
         }
     }
 
-    private func navigateToLoginsList() {
+    fileprivate func navigateToLoginsList() {
         let viewController = LoginListViewController(profile: profile)
         viewController.settingsDelegate = delegate
         navigationController?.pushViewController(viewController, animated: true)
@@ -265,7 +265,7 @@ class LoginsSetting: Setting {
 
 extension LoginsSetting: PasscodeEntryDelegate {
     @objc func passcodeValidationDidSucceed() {
-        navigationController?.dismissViewControllerAnimated(true) {
+        navigationController?.dismiss(animated: true) {
             self.navigateToLoginsList()
         }
     }
@@ -275,7 +275,7 @@ class TouchIDPasscodeSetting: Setting {
     let profile: Profile
     //var tabManager: TabManager!
 
-    override var accessoryType: UITableViewCellAccessoryType { return .DisclosureIndicator }
+    override var accessoryType: UITableViewCellAccessoryType { return .disclosureIndicator }
 
     override var accessibilityIdentifier: String? { return "TouchIDPasscode" }
 
@@ -284,7 +284,7 @@ class TouchIDPasscodeSetting: Setting {
         //self.tabManager = settings.tabManager
 
         let title: String
-        if LAContext().canEvaluatePolicy(.DeviceOwnerAuthenticationWithBiometrics, error: nil) {
+        if LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) {
             title = AuthenticationStrings.touchIDPasscodeSetting
         } else {
             title = AuthenticationStrings.passcode
@@ -293,7 +293,7 @@ class TouchIDPasscodeSetting: Setting {
                    delegate: delegate)
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         let viewController = AuthenticationSettingsViewController()
         viewController.profile = profile
         navigationController?.pushViewController(viewController, animated: true)
@@ -304,7 +304,7 @@ class ClearPrivateDataSetting: Setting {
     let profile: Profile
     //var tabManager: TabManager!
 
-    override var accessoryType: UITableViewCellAccessoryType { return .DisclosureIndicator }
+    override var accessoryType: UITableViewCellAccessoryType { return .disclosureIndicator }
 
     override var accessibilityIdentifier: String? { return "ClearPrivateData" }
 
@@ -316,7 +316,7 @@ class ClearPrivateDataSetting: Setting {
         super.init(title: NSAttributedString(string: clearTitle, attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor]))
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         let viewController = ClearPrivateDataTableViewController()
         viewController.profile = profile
         //viewController.tabManager = tabManager
@@ -329,11 +329,11 @@ class PrivacyPolicySetting: Setting {
         return NSAttributedString(string: NSLocalizedString("Privacy Policy", comment: "Show Brave Browser Privacy Policy page from the Privacy section in the settings. See https://www.brave.com/privacy"), attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor])
     }
 
-    override var url: NSURL? {
-        return NSURL(string: "https://www.brave.com/ios_privacy.html")
+    override var url: URL? {
+        return URL(string: "https://www.brave.com/ios_privacy.html")
     }
 
-    override func onClick(navigationController: UINavigationController?) {
+    override func onClick(_ navigationController: UINavigationController?) {
         setUpAndPushSettingsContentViewController(navigationController)
     }
 }

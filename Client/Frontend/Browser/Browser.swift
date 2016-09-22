@@ -13,16 +13,16 @@ private let log = Logger.browserLogger
 
 protocol BrowserHelper {
     static func scriptMessageHandlerName() -> String?
-    func userContentController(userContentController: WKUserContentController, didReceiveScriptMessage message: WKScriptMessage)
+    func userContentController(_ userContentController: WKUserContentController, didReceiveScriptMessage message: WKScriptMessage)
 }
 
 
 protocol BrowserDelegate {
-    func browser(browser: Browser, didAddSnackbar bar: SnackBar)
-    func browser(browser: Browser, didRemoveSnackbar bar: SnackBar)
-    func browser(browser: Browser, didSelectFindInPageForSelection selection: String)
-    func browser(browser: Browser, didCreateWebView webView: BraveWebView)
-    func browser(browser: Browser, willDeleteWebView webView: BraveWebView)
+    func browser(_ browser: Browser, didAddSnackbar bar: SnackBar)
+    func browser(_ browser: Browser, didRemoveSnackbar bar: SnackBar)
+    func browser(_ browser: Browser, didSelectFindInPageForSelection selection: String)
+    func browser(_ browser: Browser, didCreateWebView webView: BraveWebView)
+    func browser(_ browser: Browser, willDeleteWebView webView: BraveWebView)
 }
 
 struct DangerousReturnWKNavigation {
@@ -49,8 +49,8 @@ class UIImageWithNotify {
 }
 
 class Browser: NSObject, BrowserWebViewDelegate {
-    private var _isPrivate: Bool = false
-    internal private(set) var isPrivate: Bool {
+    fileprivate var _isPrivate: Bool = false
+    internal fileprivate(set) var isPrivate: Bool {
         get {
             if #available(iOS 9, *) {
                 return _isPrivate
@@ -75,7 +75,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
     var favicons = [String:Favicon]() // map baseDomain() to favicon
     var lastExecutedTime: Timestamp?
     var sessionData: SessionData?
-    var lastRequest: NSURLRequest? = nil
+    var lastRequest: URLRequest? = nil
     var restoring: Bool = false
     var pendingScreenshot = false
 
@@ -86,15 +86,15 @@ class Browser: NSObject, BrowserWebViewDelegate {
     /// be managed by the web view's navigation delegate.
     var desktopSite: Bool = false
 
-    private(set) var screenshot = UIImageWithNotify()
-    var screenshotUUID: NSUUID?
+    fileprivate(set) var screenshot = UIImageWithNotify()
+    var screenshotUUID: UUID?
 
-    private var helperManager: HelperManager? = nil
-    private var configuration: WKWebViewConfiguration? = nil
+    fileprivate var helperManager: HelperManager? = nil
+    fileprivate var configuration: WKWebViewConfiguration? = nil
 
     /// Any time a browser tries to make requests to display a Javascript Alert and we are not the active
     /// browser instance, queue it for later until we become foregrounded.
-    private var alertQueue = [JSAlertInfo]()
+    fileprivate var alertQueue = [JSAlertInfo]()
 
     init(configuration: WKWebViewConfiguration, isPrivate: Bool) {
         self.configuration = configuration
@@ -118,7 +118,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
     }
 #endif
 
-    class func toTab(browser: Browser) -> RemoteTab? {
+    class func toTab(_ browser: Browser) -> RemoteTab? {
         if let displayURL = browser.displayURL {
             let hl = browser.historyList;
             let history = Array(hl.filter(RemoteTab.shouldIncludeURL).reverse())
@@ -128,7 +128,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
                 history: history,
                 lastUsed: NSDate.now(),
                 icon: nil)
-        } else if let sessionData = browser.sessionData where !sessionData.urls.isEmpty {
+        } else if let sessionData = browser.sessionData , !sessionData.urls.isEmpty {
             let history = Array(sessionData.urls.filter(RemoteTab.shouldIncludeURL).reverse())
             if let displayURL = history.first {
                 return RemoteTab(clientGUID: nil,
@@ -151,9 +151,9 @@ class Browser: NSObject, BrowserWebViewDelegate {
         }
     }
 
-    func createWebview(useDesktopUserAgent useDesktopUserAgent:Bool = false) {
-        assert(NSThread.isMainThread())
-        if !NSThread.isMainThread() {
+    func createWebview(useDesktopUserAgent:Bool = false) {
+        assert(Thread.isMainThread)
+        if !Thread.isMainThread {
             return
         }
 
@@ -164,14 +164,14 @@ class Browser: NSObject, BrowserWebViewDelegate {
             configuration!.preferences = WKPreferences()
             configuration!.preferences.javaScriptCanOpenWindowsAutomatically = false
 #endif
-            let webView = BraveWebView(frame: CGRectZero, useDesktopUserAgent: useDesktopUserAgent)
+            let webView = BraveWebView(frame: CGRect.zero, useDesktopUserAgent: useDesktopUserAgent)
             configuration = nil
 
             webView.accessibilityLabel = NSLocalizedString("Web content", comment: "Accessibility label for the main web content view")
 #if !BRAVE
             webView.allowsBackForwardNavigationGestures = true
 #endif
-            webView.backgroundColor = UIColor.lightGrayColor()
+            webView.backgroundColor = UIColor.lightGray
 
             // Turning off masking allows the web content to flow outside of the scrollView's frame
             // which allows the content appear beneath the toolbars in the BrowserViewController
@@ -189,11 +189,11 @@ class Browser: NSObject, BrowserWebViewDelegate {
             // Since we now have a web view, lastTitle is no longer useful.
             lastTitle = nil
 #endif
-            lastExecutedTime = NSDate.now()
+            lastExecutedTime = Date.now()
         }
     }
 
-    func restore(webView: BraveWebView) {
+    func restore(_ webView: BraveWebView) {
         // Pulls restored session data from a previous SavedTab to load into the Browser. If it's nil, a session restore
         // has already been triggered via custom URL, so we use the last request to trigger it again; otherwise,
         // we extract the information needed to restore the tabs and create a NSURLRequest with the custom session restore URL
@@ -214,11 +214,11 @@ class Browser: NSObject, BrowserWebViewDelegate {
             let currentPage = sessionData.currentPage
             self.sessionData = nil
             var jsonDict = [String: AnyObject]()
-            jsonDict["history"] = updatedURLs
-            jsonDict["currentPage"] = currentPage
-            let escapedJSON = JSON.stringify(jsonDict, pretty: false).stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())!
-            let restoreURL = NSURL(string: "\(WebServer.sharedInstance.base)/about/sessionrestore?history=\(escapedJSON)")
-            lastRequest = NSURLRequest(URL: restoreURL!)
+            jsonDict["history"] = updatedURLs as AnyObject?
+            jsonDict["currentPage"] = currentPage as AnyObject?
+            let escapedJSON = JSON.stringify(jsonDict, pretty: false).stringByAddingPercentEncodingWithAllowedCharacters(CharacterSet.URLQueryAllowedCharacterSet())!
+            let restoreURL = URL(string: "\(WebServer.sharedInstance.base)/about/sessionrestore?history=\(escapedJSON)")
+            lastRequest = URLRequest(URL: restoreURL!)
             webView.loadRequest(lastRequest!)
         } else if let request = lastRequest {
             webView.loadRequest(request)
@@ -227,11 +227,11 @@ class Browser: NSObject, BrowserWebViewDelegate {
         }
     }
 
-    func deleteWebView(isTabDeleted isTabDeleted: Bool) {
-        assert(NSThread.isMainThread()) // to find and remove these cases in debug
+    func deleteWebView(isTabDeleted: Bool) {
+        assert(Thread.isMainThread) // to find and remove these cases in debug
         guard let wv = webView else { return }
 
-        dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        DispatchQueue.global(priority: DispatchQueue.GlobalQueuePriority.default).sync {
             if !isTabDeleted {
                 self.lastTitle = self.title
                 let currentItem: LegacyBackForwardListItem! = wv.backForwardList.currentItem
@@ -242,7 +242,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
                     let forwardList = wv.backForwardList.forwardList ?? []
                     let urls = (backList + [currentItem] + forwardList).map { $0.URL }
                     let currentPage = -forwardList.count
-                    self.sessionData = SessionData(currentPage: currentPage, currentTitle: self.title, urls: urls, lastUsedTime: self.lastExecutedTime ?? NSDate.now())
+                    self.sessionData = SessionData(currentPage: currentPage, currentTitle: self.title, urls: urls, lastUsedTime: self.lastExecutedTime ?? Date.now())
                 }
             }
             self.browserDelegate?.browser(self, willDeleteWebView: wv)
@@ -255,7 +255,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
     }
 
     var loading: Bool {
-        return webView?.loading ?? false
+        return webView?.isLoading ?? false
     }
 
     var estimatedProgress: Double {
@@ -270,9 +270,9 @@ class Browser: NSObject, BrowserWebViewDelegate {
         return webView?.backForwardList.forwardList
     }
 
-    var historyList: [NSURL] {
-        func listToUrl(item: LegacyBackForwardListItem) -> NSURL { return item.URL }
-        var tabs = self.backList?.map(listToUrl) ?? [NSURL]()
+    var historyList: [URL] {
+        func listToUrl(_ item: LegacyBackForwardListItem) -> URL { return item.URL as URL }
+        var tabs = self.backList?.map(listToUrl) ?? [URL]()
         tabs.append(self.url!)
         return tabs
     }
@@ -282,26 +282,26 @@ class Browser: NSObject, BrowserWebViewDelegate {
     }
 
     var displayTitle: String {
-        if let title = webView?.title where !title.isEmpty {
+        if let title = webView?.title , !title.isEmpty {
             return title
         }
 
-        guard let lastTitle = lastTitle where !lastTitle.isEmpty else {
+        guard let lastTitle = lastTitle , !lastTitle.isEmpty else {
             return displayURL?.absoluteString ??  ""
         }
 
         return lastTitle
     }
 
-    var currentInitialURL: NSURL? {
+    var currentInitialURL: URL? {
         get {
             let initalURL = self.webView?.backForwardList.currentItem?.initialURL
-            return initalURL
+            return initalURL as URL?
         }
     }
 
     var displayFavicon: Favicon? {
-        assert(NSThread.isMainThread())
+        assert(Thread.isMainThread)
         var width = 0
         var largest: Favicon?
         for icon in favicons {
@@ -316,15 +316,15 @@ class Browser: NSObject, BrowserWebViewDelegate {
         return largest
     }
 
-    var url: NSURL? {
-        guard let resolvedURL = webView?.URL ?? lastRequest?.URL else {
+    var url: URL? {
+        guard let resolvedURL = webView?.URL ?? lastRequest?.url else {
             guard let sessionData = sessionData else { return nil }
-            return sessionData.urls.last
+            return sessionData.urls.last as URL?
         }
         return resolvedURL
     }
 
-    var displayURL: NSURL? {
+    var displayURL: URL? {
         if let url = url {
             if ReaderModeUtils.isReaderModeURL(url) {
                 return ReaderModeUtils.decodeURL(url)
@@ -339,10 +339,10 @@ class Browser: NSObject, BrowserWebViewDelegate {
                 }
             }
 
-            if let urlComponents = NSURLComponents(URL: url, resolvingAgainstBaseURL: false) where (urlComponents.user != nil) || (urlComponents.password != nil) {
+            if let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) , (urlComponents.user != nil) || (urlComponents.password != nil) {
                 urlComponents.user = nil
                 urlComponents.password = nil
-                return urlComponents.URL
+                return urlComponents.url
             }
 
             if !AboutUtils.isAboutURL(url) && !url.absoluteString.contains(WebServer.sharedInstance.base) {
@@ -368,11 +368,11 @@ class Browser: NSObject, BrowserWebViewDelegate {
         webView?.goForward()
     }
 
-    func goToBackForwardListItem(item: LegacyBackForwardListItem) {
+    func goToBackForwardListItem(_ item: LegacyBackForwardListItem) {
         webView?.goToBackForwardListItem(item)
     }
 
-    func loadRequest(request: NSURLRequest) -> WKNavigation? {
+    func loadRequest(_ request: URLRequest) -> WKNavigation? {
         if let webView = webView {
             lastRequest = request
 #if !BRAVE
@@ -392,22 +392,22 @@ class Browser: NSObject, BrowserWebViewDelegate {
         webView?.reloadFromOrigin()
     }
 
-    func addHelper(helper: BrowserHelper) {
+    func addHelper(_ helper: BrowserHelper) {
         helperManager!.addHelper(helper)
     }
 
-    func getHelper<T>(classType: T.Type) -> T? {
+    func getHelper<T>(_ classType: T.Type) -> T? {
         return helperManager?.getHelper(classType)
     }
 
-    func removeHelper<T>(classType: T.Type) {
+    func removeHelper<T>(_ classType: T.Type) {
         helperManager?.removeHelper(classType)
     }
 
-    func hideContent(animated: Bool = false) {
-        webView?.userInteractionEnabled = false
+    func hideContent(_ animated: Bool = false) {
+        webView?.isUserInteractionEnabled = false
         if animated {
-            UIView.animateWithDuration(0.25, animations: { () -> Void in
+            UIView.animate(withDuration: 0.25, animations: { () -> Void in
                 self.webView?.alpha = 0.0
             })
         } else {
@@ -415,10 +415,10 @@ class Browser: NSObject, BrowserWebViewDelegate {
         }
     }
 
-    func showContent(animated: Bool = false) {
-        webView?.userInteractionEnabled = true
+    func showContent(_ animated: Bool = false) {
+        webView?.isUserInteractionEnabled = true
         if animated {
-            UIView.animateWithDuration(0.25, animations: { () -> Void in
+            UIView.animate(withDuration: 0.25, animations: { () -> Void in
                 self.webView?.alpha = 1.0
             })
         } else {
@@ -426,21 +426,21 @@ class Browser: NSObject, BrowserWebViewDelegate {
         }
     }
 
-    func addSnackbar(bar: SnackBar) {
+    func addSnackbar(_ bar: SnackBar) {
         bars.append(bar)
         browserDelegate?.browser(self, didAddSnackbar: bar)
     }
 
-    func removeSnackbar(bar: SnackBar) {
-        if let index = bars.indexOf(bar) {
-            bars.removeAtIndex(index)
+    func removeSnackbar(_ bar: SnackBar) {
+        if let index = bars.index(of: bar) {
+            bars.remove(at: index)
             browserDelegate?.browser(self, didRemoveSnackbar: bar)
         }
     }
 
     func removeAllSnackbars() {
         // Enumerate backwards here because we'll remove items from the list as we go.
-        for i in (0..<bars.count).reverse() {
+        for i in (0..<bars.count).reversed() {
             let bar = bars[i]
             removeSnackbar(bar)
         }
@@ -448,7 +448,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
 
     func expireSnackbars() {
         // Enumerate backwards here because we may remove items from the list as we go.
-        for i in (0..<bars.count).reverse() {
+        for i in (0..<bars.count).reversed() {
             let bar = bars[i]
             if !bar.shouldPersist(self) {
                 removeSnackbar(bar)
@@ -457,9 +457,9 @@ class Browser: NSObject, BrowserWebViewDelegate {
     }
 
 
-    func setScreenshot(screenshot: UIImage?, revUUID: Bool = true) {
+    func setScreenshot(_ screenshot: UIImage?, revUUID: Bool = true) {
 #if IMAGE_SWIPE_ON
-        if let loc = webView?.URL?.absoluteString, screenshot = screenshot {
+        if let loc = webView?.URL?.absoluteString, let screenshot = screenshot {
             screenshotsForHistory.addForLocation(loc, image: screenshot)
         }
 #endif
@@ -467,7 +467,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
 
         self.screenshot.image = screenshot
         if revUUID {
-            self.screenshotUUID = NSUUID()
+            self.screenshotUUID = UUID()
         }
     }
 
@@ -476,7 +476,7 @@ class Browser: NSObject, BrowserWebViewDelegate {
 //        reload()
 //    }
 
-    func queueJavascriptAlertPrompt(alert: JSAlertInfo) {
+    func queueJavascriptAlertPrompt(_ alert: JSAlertInfo) {
         alertQueue.append(alert)
     }
 
@@ -493,22 +493,22 @@ class Browser: NSObject, BrowserWebViewDelegate {
         }
     }
 
-    private func browserWebView(browserWebView: BrowserWebView, didSelectFindInPageForSelection selection: String) {
+    fileprivate func browserWebView(_ browserWebView: BrowserWebView, didSelectFindInPageForSelection selection: String) {
         browserDelegate?.browser(self, didSelectFindInPageForSelection: selection)
     }
 }
 
 private class HelperManager: NSObject, WKScriptMessageHandler {
-    private var helpers = [String: BrowserHelper]()
-    private weak var webView: BraveWebView?
+    fileprivate var helpers = [String: BrowserHelper]()
+    fileprivate weak var webView: BraveWebView?
 
     init(webView: BraveWebView) {
         self.webView = webView
     }
 
-    @objc func userContentController(userContentController: WKUserContentController, didReceiveScriptMessage message: WKScriptMessage) {
+    @objc func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         for helper in helpers.values {
-            if let scriptMessageHandlerName = helper.dynamicType.scriptMessageHandlerName() {
+            if let scriptMessageHandlerName = type(of: helper).scriptMessageHandlerName() {
                 if scriptMessageHandlerName == message.name {
                     helper.userContentController(userContentController, didReceiveScriptMessage: message)
                     return
@@ -517,54 +517,54 @@ private class HelperManager: NSObject, WKScriptMessageHandler {
         }
     }
 
-    func addHelper(helper: BrowserHelper) {
-        if let _ = helpers["\(helper.dynamicType)"] {
-            assertionFailure("Duplicate helper added: \(helper.dynamicType)")
+    func addHelper(_ helper: BrowserHelper) {
+        if let _ = helpers["\(type(of: helper))"] {
+            assertionFailure("Duplicate helper added: \(type(of: helper))")
         }
 
-        helpers["\(helper.dynamicType)"] = helper
+        helpers["\(type(of: helper))"] = helper
 
         // If this helper handles script messages, then get the handler name and register it. The Browser
         // receives all messages and then dispatches them to the right BrowserHelper.
-        if let scriptMessageHandlerName = helper.dynamicType.scriptMessageHandlerName() {
+        if let scriptMessageHandlerName = type(of: helper).scriptMessageHandlerName() {
             webView?.configuration.userContentController.addScriptMessageHandler(self, name: scriptMessageHandlerName)
         }
     }
 
-    func getHelper<T>(classType: T.Type) -> T? {
+    func getHelper<T>(_ classType: T.Type) -> T? {
         return helpers["\(classType)"] as? T
     }
 
-    func removeHelper<T>(classType: T.Type) {
-        if let t = T.self as? BrowserHelper.Type, name = t.scriptMessageHandlerName() {
+    func removeHelper<T>(_ classType: T.Type) {
+        if let t = T.self as? BrowserHelper.Type, let name = t.scriptMessageHandlerName() {
             webView?.configuration.userContentController.removeScriptMessageHandler(name: name)
         }
-        helpers.removeValueForKey("\(classType)")
+        helpers.removeValue(forKey: "\(classType)")
     }
 }
 
 private protocol BrowserWebViewDelegate: class {
-    func browserWebView(browserWebView: BrowserWebView, didSelectFindInPageForSelection selection: String)
+    func browserWebView(_ browserWebView: BrowserWebView, didSelectFindInPageForSelection selection: String)
 }
 
 private class BrowserWebView: WKWebView, MenuHelperInterface {
-    private weak var delegate: BrowserWebViewDelegate?
+    fileprivate weak var delegate: BrowserWebViewDelegate?
 
-    override func canPerformAction(action: Selector, withSender sender: AnyObject?) -> Bool {
+    override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         return action == MenuHelper.SelectorFindInPage
     }
 
-    @objc func menuHelperFindInPage(sender: NSNotification) {
+    @objc func menuHelperFindInPage(_ sender: Notification) {
         evaluateJavaScript("getSelection().toString()") { result, _ in
             let selection = result as? String ?? ""
             self.delegate?.browserWebView(self, didSelectFindInPageForSelection: selection)
         }
     }
 
-    private override func hitTest(point: CGPoint, withEvent event: UIEvent?) -> UIView? {
+    fileprivate override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         // The find-in-page selection menu only appears if the webview is the first responder.
         becomeFirstResponder()
 
-        return super.hitTest(point, withEvent: event)
+        return super.hitTest(point, with: event)
     }
 }

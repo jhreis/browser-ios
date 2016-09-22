@@ -15,7 +15,7 @@ class HttpsEverywhere {
     var httpseDb = HttpsEverywhereObjC()
 
     lazy var networkFileLoader: NetworkDataFileLoader = {
-        let targetsDataUrl = NSURL(string: "https://s3.amazonaws.com/https-everywhere-data/\(dataVersion)/httpse.leveldb.tgz")!
+        let targetsDataUrl = URL(string: "https://s3.amazonaws.com/https-everywhere-data/\(dataVersion)/httpse.leveldb.tgz")!
         let dataFile = "httpse-\(dataVersion).leveldb.tgz"
         let loader = NetworkDataFileLoader(url: targetsDataUrl, file: dataFile, localDirName: "https-everywhere-data")
         loader.delegate = self
@@ -27,24 +27,24 @@ class HttpsEverywhere {
         return _singleton
     }
 
-    private init() {
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(HttpsEverywhere.prefsChanged(_:)), name: NSUserDefaultsDidChangeNotification, object: nil)
+    fileprivate init() {
+        NotificationCenter.default.addObserver(self, selector: #selector(HttpsEverywhere.prefsChanged(_:)), name: UserDefaults.didChangeNotification, object: nil)
         updateEnabledState()
     }
 
 
-    func loadDb(dir dir:String, name:String) {
+    func loadDb(dir:String, name:String) {
         let path = dir + "/" + name
-        if !NSFileManager.defaultManager().fileExistsAtPath(path) {
+        if !FileManager.default.fileExists(atPath: path) {
             return
         }
 
         httpseDb.load(path)
         if !httpseDb.isLoaded() {
-            do { try NSFileManager.defaultManager().removeItemAtPath(path) }
+            do { try FileManager.default.removeItem(atPath: path) }
             catch {}
         } else {
-            NSNotificationCenter.defaultCenter().postNotificationName(HttpsEverywhere.kNotificationDataLoaded, object: self)
+            NotificationCenter.default.post(name: Notification.Name(rawValue: HttpsEverywhere.kNotificationDataLoaded), object: self)
             print("httpse loaded")
         }
         assert(httpseDb.isLoaded())
@@ -58,31 +58,31 @@ class HttpsEverywhere {
         isNSPrefEnabled = BraveApp.getPrefs()?.boolForKey(HttpsEverywhere.prefKey) ?? true
     }
 
-    @objc func prefsChanged(info: NSNotification) {
+    @objc func prefsChanged(_ info: Notification) {
         updateEnabledState()
     }
 
 
-    func tryRedirectingUrl(url: NSURL) -> NSURL? {
+    func tryRedirectingUrl(_ url: URL) -> URL? {
         if url.scheme.startsWith("https") {
             return nil
         }
 
         let result = httpseDb.tryRedirectingUrl(url)
-        if result.isEmpty {
+        if (result?.isEmpty)! {
             return nil
         } else {
-            return NSURL(string: result)
+            return URL(string: result!)
         }
     }
 }
 
-private func unzipFile(dir dir: String, data: NSData) {
-    let unzip = data.gunzippedData()
-    let fm = NSFileManager.defaultManager()
+private func unzipFile(dir: String, data: Data) {
+    let unzip = (data as NSData).gunzipped()
+    let fm = FileManager.default
 
     do {
-        try fm.createFilesAndDirectoriesAtPath(dir,
+        try fm.createFilesAndDirectories(atPath: dir,
                                                withTarData: unzip,
                                                progress:  { _ in
         })
@@ -96,7 +96,7 @@ private func unzipFile(dir dir: String, data: NSData) {
 
 
 extension HttpsEverywhere: NetworkDataFileLoaderDelegate {
-    func unzipAndLoad(dir dir: String, data: NSData) {
+    func unzipAndLoad(dir: String, data: Data) {
         httpseDb.close()
         succeed().upon() { _ in
 
@@ -112,13 +112,13 @@ extension HttpsEverywhere: NetworkDataFileLoaderDelegate {
             }
         }
     }
-    func fileLoader(loader: NetworkDataFileLoader, setDataFile data: NSData?) {
+    func fileLoader(_ loader: NetworkDataFileLoader, setDataFile data: Data?) {
         guard let data = data else { return }
         let (dir, _) = loader.createAndGetDataDirPath()
         unzipAndLoad(dir: dir, data: data)
     }
 
-    func fileLoaderHasDataFile(loader: NetworkDataFileLoader) -> Bool {
+    func fileLoaderHasDataFile(_ loader: NetworkDataFileLoader) -> Bool {
         if !httpseDb.isLoaded() {
             let (dir, _) = loader.createAndGetDataDirPath()
             self.loadDb(dir: dir, name: levelDbFileName)
@@ -127,7 +127,7 @@ extension HttpsEverywhere: NetworkDataFileLoaderDelegate {
         return httpseDb.isLoaded()
     }
 
-    func fileLoaderDelegateWillHandleInitialRead(loader: NetworkDataFileLoader) -> Bool {
+    func fileLoaderDelegateWillHandleInitialRead(_ loader: NetworkDataFileLoader) -> Bool {
         return true
     }
 }
@@ -135,7 +135,7 @@ extension HttpsEverywhere: NetworkDataFileLoaderDelegate {
 
 // Build in test cases, swift compiler is mangling the test cases in HttpsEverywhereTests.swift and they are failing. The compiler is falsely casting  AnyObjects to XCUIElement, which then breaks the runtime tests, I don't have time to look at this further ATM.
 extension HttpsEverywhere {
-    private func runtimeDebugOnlyTestDomainsRedirected() {
+    fileprivate func runtimeDebugOnlyTestDomainsRedirected() {
         #if DEBUG
             let urls = ["thestar.com", "thestar.com/", "www.thestar.com", "apple.com", "xkcd.com"]
             for url in urls {
@@ -152,7 +152,7 @@ extension HttpsEverywhere {
         #endif
     }
 
-    private func runtimeDebugOnlyTestVerifyResourcesLoaded() {
+    fileprivate func runtimeDebugOnlyTestVerifyResourcesLoaded() {
         #if DEBUG
             postAsyncToMain(10) {
                 if !self.httpseDb.isLoaded() {

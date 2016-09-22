@@ -9,16 +9,16 @@ extension UIView {
     /**
      * Takes a screenshot of the view with the given size.
      */
-    func screenshot(size: CGSize, offset: CGPoint? = nil, quality: CGFloat = 1) -> UIImage? {
+    func screenshot(_ size: CGSize, offset: CGPoint? = nil, quality: CGFloat = 1) -> UIImage? {
         assert(0...1 ~= quality)
 
         if size.width < 1 || size.height < 1 || superview == nil {
             return nil
         }
 
-        let offset = offset ?? CGPointMake(0, 0)
-        UIGraphicsBeginImageContextWithOptions(size, true, UIScreen.mainScreen().scale * quality)
-        drawViewHierarchyInRect(CGRect(origin: offset, size: frame.size), afterScreenUpdates: false)
+        let offset = offset ?? CGPoint(x: 0, y: 0)
+        UIGraphicsBeginImageContextWithOptions(size, true, UIScreen.main.scale * quality)
+        drawHierarchy(in: CGRect(origin: offset, size: frame.size), afterScreenUpdates: false)
         let image = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return image
@@ -44,7 +44,7 @@ extension UIView {
      * An aspect ratio of 0 means capture the entire view.
      * Quality of zero means to use built in default, which adjusts based on the device capabilities
      */
-    func screenshot(aspectRatio: CGFloat = 0, offset: CGPoint? = nil, quality _quality: CGFloat = 0) -> UIImage? {
+    func screenshot(_ aspectRatio: CGFloat = 0, offset: CGPoint? = nil, quality _quality: CGFloat = 0) -> UIImage? {
         assert(aspectRatio >= 0)
 
         let quality = _quality != 0 ? _quality : ( DeviceInfo.isBlurSupported() ? 0.5 : 0.2 )
@@ -72,7 +72,7 @@ extension UIView {
      * Performs a deep copy of the view. Does not copy constraints.
      */
     func clone() -> UIView {
-        let data = NSKeyedArchiver.archivedDataWithRootObject(self)
-        return NSKeyedUnarchiver.unarchiveObjectWithData(data) as! UIView
+        let data = NSKeyedArchiver.archivedData(withRootObject: self)
+        return NSKeyedUnarchiver.unarchiveObject(with: data) as! UIView
     }
 }

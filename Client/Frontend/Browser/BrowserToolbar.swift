@@ -20,27 +20,27 @@ protocol BrowserToolbarProtocol {
     var stopReloadButton: UIButton { get }
     var actionButtons: [UIButton] { get }
 
-    func updateBackStatus(canGoBack: Bool)
-    func updateForwardStatus(canGoForward: Bool)
-    func updateReloadStatus(isLoading: Bool)
-    func updatePageStatus(isWebPage isWebPage: Bool)
+    func updateBackStatus(_ canGoBack: Bool)
+    func updateForwardStatus(_ canGoForward: Bool)
+    func updateReloadStatus(_ isLoading: Bool)
+    func updatePageStatus(isWebPage: Bool)
 }
 
 @objc
 protocol BrowserToolbarDelegate: class {
-    func browserToolbarDidPressBack(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidPressForward(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidLongPressBack(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidLongPressForward(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidPressReload(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidPressStop(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidPressBookmark(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidLongPressBookmark(browserToolbar: BrowserToolbarProtocol, button: UIButton)
-    func browserToolbarDidPressShare(browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidPressBack(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidPressForward(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidLongPressBack(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidLongPressForward(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidPressReload(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidPressStop(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidPressBookmark(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidLongPressBookmark(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
+    func browserToolbarDidPressShare(_ browserToolbar: BrowserToolbarProtocol, button: UIButton)
 }
 
 @objc
-public class BrowserToolbarHelper: NSObject {
+open class BrowserToolbarHelper: NSObject {
     let toolbar: BrowserToolbarProtocol
 
     let ImageReload = UIImage(named: "reload")
@@ -57,18 +57,18 @@ public class BrowserToolbarHelper: NSObject {
     var loading: Bool = false {
         didSet {
             if loading {
-                toolbar.stopReloadButton.setImage(ImageStop, forState: .Normal)
-                toolbar.stopReloadButton.setImage(ImageStopPressed, forState: .Highlighted)
+                toolbar.stopReloadButton.setImage(ImageStop, for: UIControlState())
+                toolbar.stopReloadButton.setImage(ImageStopPressed, for: .highlighted)
                 toolbar.stopReloadButton.accessibilityLabel = NSLocalizedString("Stop", comment: "Accessibility Label for the browser toolbar Stop button")
             } else {
-                toolbar.stopReloadButton.setImage(ImageReload, forState: .Normal)
-                toolbar.stopReloadButton.setImage(ImageReloadPressed, forState: .Highlighted)
+                toolbar.stopReloadButton.setImage(ImageReload, for: UIControlState())
+                toolbar.stopReloadButton.setImage(ImageReloadPressed, for: .highlighted)
                 toolbar.stopReloadButton.accessibilityLabel = NSLocalizedString("Reload", comment: "Accessibility Label for the browser toolbar Reload button")
             }
         }
     }
 
-    private func setTintColor(color: UIColor, forButtons buttons: [UIButton]) {
+    fileprivate func setTintColor(_ color: UIColor, forButtons buttons: [UIButton]) {
       return
         buttons.forEach { $0.tintColor = color }
     }
@@ -77,44 +77,44 @@ public class BrowserToolbarHelper: NSObject {
         self.toolbar = toolbar
         super.init()
 
-        toolbar.backButton.setImage(UIImage(named: "back"), forState: .Normal)
+        toolbar.backButton.setImage(UIImage(named: "back"), for: UIControlState())
         //toolbar.backButton.setImage(UIImage(named: "backPressed"), forState: .Highlighted)
         toolbar.backButton.accessibilityLabel = NSLocalizedString("Back", comment: "Accessibility Label for the browser toolbar Back button")
         //toolbar.backButton.accessibilityHint = NSLocalizedString("Double tap and hold to open history", comment: "")
         let longPressGestureBackButton = UILongPressGestureRecognizer(target: self, action: #selector(BrowserToolbarHelper.SELdidLongPressBack(_:)))
         toolbar.backButton.addGestureRecognizer(longPressGestureBackButton)
-        toolbar.backButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickBack), forControlEvents: UIControlEvents.TouchUpInside)
+        toolbar.backButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickBack), for: UIControlEvents.touchUpInside)
 
-        toolbar.forwardButton.setImage(UIImage(named: "forward"), forState: .Normal)
+        toolbar.forwardButton.setImage(UIImage(named: "forward"), for: UIControlState())
         //toolbar.forwardButton.setImage(UIImage(named: "forwardPressed"), forState: .Highlighted)
         toolbar.forwardButton.accessibilityLabel = NSLocalizedString("Forward", comment: "Accessibility Label for the browser toolbar Forward button")
         //toolbar.forwardButton.accessibilityHint = NSLocalizedString("Double tap and hold to open history", comment: "")
         let longPressGestureForwardButton = UILongPressGestureRecognizer(target: self, action: #selector(BrowserToolbarHelper.SELdidLongPressForward(_:)))
         toolbar.forwardButton.addGestureRecognizer(longPressGestureForwardButton)
-        toolbar.forwardButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickForward), forControlEvents: UIControlEvents.TouchUpInside)
+        toolbar.forwardButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickForward), for: UIControlEvents.touchUpInside)
 
-        toolbar.stopReloadButton.setImage(UIImage(named: "reload"), forState: .Normal)
-        toolbar.stopReloadButton.setImage(UIImage(named: "reloadPressed"), forState: .Highlighted)
+        toolbar.stopReloadButton.setImage(UIImage(named: "reload"), for: UIControlState())
+        toolbar.stopReloadButton.setImage(UIImage(named: "reloadPressed"), for: .highlighted)
         toolbar.stopReloadButton.accessibilityLabel = NSLocalizedString("Reload", comment: "Accessibility Label for the browser toolbar Reload button")
         let longPressGestureStopReloadButton = UILongPressGestureRecognizer(target: self, action: #selector(BrowserToolbarHelper.SELdidLongPressStopReload(_:)))
         toolbar.stopReloadButton.addGestureRecognizer(longPressGestureStopReloadButton)
-        toolbar.stopReloadButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickStopReload), forControlEvents: UIControlEvents.TouchUpInside)
+        toolbar.stopReloadButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickStopReload), for: UIControlEvents.touchUpInside)
 
-        toolbar.shareButton.setImage(UIImage(named: "send"), forState: .Normal)
+        toolbar.shareButton.setImage(UIImage(named: "send"), for: UIControlState())
 #if !BRAVE // we use the default press state for now. 
-        toolbar.shareButton.setImage(UIImage(named: "sendPressed"), forState: .Highlighted)
+        toolbar.shareButton.setImage(UIImage(named: "sendPressed"), for: .highlighted)
 #endif
         toolbar.shareButton.accessibilityLabel = NSLocalizedString("Share", comment: "Accessibility Label for the browser toolbar Share button")
-        toolbar.shareButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickShare), forControlEvents: UIControlEvents.TouchUpInside)
-        toolbar.bookmarkButton.contentMode = UIViewContentMode.Center
+        toolbar.shareButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickShare), for: UIControlEvents.touchUpInside)
+        toolbar.bookmarkButton.contentMode = UIViewContentMode.center
 
-        toolbar.bookmarkButton.setImage(UIImage(named: "bookmark"), forState: .Normal)
-        toolbar.bookmarkButton.setImage(UIImage(named: "bookmarked"), forState: UIControlState.Selected)
-        toolbar.bookmarkButton.setImage(UIImage(named: "bookmarkHighlighted"), forState: UIControlState.Highlighted)
+        toolbar.bookmarkButton.setImage(UIImage(named: "bookmark"), for: UIControlState())
+        toolbar.bookmarkButton.setImage(UIImage(named: "bookmarked"), for: UIControlState.selected)
+        toolbar.bookmarkButton.setImage(UIImage(named: "bookmarkHighlighted"), for: UIControlState.highlighted)
         toolbar.bookmarkButton.accessibilityLabel = NSLocalizedString("Bookmark", comment: "Accessibility Label for the browser toolbar Bookmark button")
         let longPressGestureBookmarkButton = UILongPressGestureRecognizer(target: self, action: #selector(BrowserToolbarHelper.SELdidLongPressBookmark(_:)))
         toolbar.bookmarkButton.addGestureRecognizer(longPressGestureBookmarkButton)
-        toolbar.bookmarkButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickBookmark), forControlEvents: UIControlEvents.TouchUpInside)
+        toolbar.bookmarkButton.addTarget(self, action: #selector(BrowserToolbarHelper.SELdidClickBookmark), for: UIControlEvents.touchUpInside)
 
         setTintColor(buttonTintColor, forButtons: toolbar.actionButtons)
     }
@@ -123,8 +123,8 @@ public class BrowserToolbarHelper: NSObject {
         toolbar.browserToolbarDelegate?.browserToolbarDidPressBack(toolbar, button: toolbar.backButton)
     }
 
-    func SELdidLongPressBack(recognizer: UILongPressGestureRecognizer) {
-        if recognizer.state == UIGestureRecognizerState.Began {
+    func SELdidLongPressBack(_ recognizer: UILongPressGestureRecognizer) {
+        if recognizer.state == UIGestureRecognizerState.began {
             toolbar.browserToolbarDelegate?.browserToolbarDidLongPressBack(toolbar, button: toolbar.backButton)
         }
     }
@@ -137,8 +137,8 @@ public class BrowserToolbarHelper: NSObject {
         toolbar.browserToolbarDelegate?.browserToolbarDidPressForward(toolbar, button: toolbar.forwardButton)
     }
 
-    func SELdidLongPressForward(recognizer: UILongPressGestureRecognizer) {
-        if recognizer.state == UIGestureRecognizerState.Began {
+    func SELdidLongPressForward(_ recognizer: UILongPressGestureRecognizer) {
+        if recognizer.state == UIGestureRecognizerState.began {
             toolbar.browserToolbarDelegate?.browserToolbarDidLongPressForward(toolbar, button: toolbar.forwardButton)
         }
     }
@@ -147,8 +147,8 @@ public class BrowserToolbarHelper: NSObject {
         toolbar.browserToolbarDelegate?.browserToolbarDidPressBookmark(toolbar, button: toolbar.bookmarkButton)
     }
 
-    func SELdidLongPressBookmark(recognizer: UILongPressGestureRecognizer) {
-        if recognizer.state == UIGestureRecognizerState.Began {
+    func SELdidLongPressBookmark(_ recognizer: UILongPressGestureRecognizer) {
+        if recognizer.state == UIGestureRecognizerState.began {
             toolbar.browserToolbarDelegate?.browserToolbarDidLongPressBookmark(toolbar, button: toolbar.bookmarkButton)
         }
     }
@@ -164,11 +164,11 @@ public class BrowserToolbarHelper: NSObject {
         }
     }
 
-    func SELdidLongPressStopReload(recognizer: UILongPressGestureRecognizer) {
+    func SELdidLongPressStopReload(_ recognizer: UILongPressGestureRecognizer) {
 
     }
 
-    func updateReloadStatus(isLoading: Bool) {
+    func updateReloadStatus(_ isLoading: Bool) {
         loading = isLoading
     }
 }
@@ -193,7 +193,7 @@ class BrowserToolbar: Toolbar, BrowserToolbarProtocol {
         themes[Theme.PrivateMode] = theme
 
         theme = Theme()
-        theme.buttonTintColor = UIColor.darkGrayColor()
+        theme.buttonTintColor = UIColor.darkGray
         themes[Theme.NormalMode] = theme
 
         return themes
@@ -220,7 +220,7 @@ class BrowserToolbar: Toolbar, BrowserToolbarProtocol {
 
         addButtons(backButton, forwardButton, stopReloadButton, shareButton, bookmarkButton)
 
-        accessibilityNavigationStyle = .Combined
+        accessibilityNavigationStyle = .combined
         accessibilityLabel = NSLocalizedString("Navigation Toolbar", comment: "Accessibility label for the navigation toolbar displayed at the bottom of the screen.")
     }
 
@@ -228,36 +228,36 @@ class BrowserToolbar: Toolbar, BrowserToolbarProtocol {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func updateBackStatus(canGoBack: Bool) {
-        backButton.enabled = canGoBack
+    func updateBackStatus(_ canGoBack: Bool) {
+        backButton.isEnabled = canGoBack
     }
 
-    func updateForwardStatus(canGoForward: Bool) {
-        forwardButton.enabled = canGoForward
+    func updateForwardStatus(_ canGoForward: Bool) {
+        forwardButton.isEnabled = canGoForward
     }
 
-    func updateReloadStatus(isLoading: Bool) {
+    func updateReloadStatus(_ isLoading: Bool) {
         helper?.updateReloadStatus(isLoading)
     }
 
-    func updatePageStatus(isWebPage isWebPage: Bool) {
-        bookmarkButton.enabled = isWebPage
-        stopReloadButton.enabled = isWebPage
-        shareButton.enabled = isWebPage
+    func updatePageStatus(isWebPage: Bool) {
+        bookmarkButton.isEnabled = isWebPage
+        stopReloadButton.isEnabled = isWebPage
+        shareButton.isEnabled = isWebPage
     }
 
-    override func drawRect(rect: CGRect) {
+    override func draw(_ rect: CGRect) {
         if let context = UIGraphicsGetCurrentContext() {
             drawLine(context, start: CGPoint(x: 0, y: 0), end: CGPoint(x: frame.width, y: 0))
         }
     }
 
-    private func drawLine(context: CGContextRef, start: CGPoint, end: CGPoint) {
-        CGContextSetStrokeColorWithColor(context, UIColor.blackColor().colorWithAlphaComponent(0.05).CGColor)
-        CGContextSetLineWidth(context, 2)
-        CGContextMoveToPoint(context, start.x, start.y)
-        CGContextAddLineToPoint(context, end.x, end.y)
-        CGContextStrokePath(context)
+    fileprivate func drawLine(_ context: CGContext, start: CGPoint, end: CGPoint) {
+        context.setStrokeColor(UIColor.black.withAlphaComponent(0.05).cgColor)
+        context.setLineWidth(2)
+        context.move(to: CGPoint(x: start.x, y: start.y))
+        context.addLine(to: CGPoint(x: end.x, y: end.y))
+        context.strokePath()
     }
 }
 
@@ -273,7 +273,7 @@ extension BrowserToolbar {
 }
 
 extension BrowserToolbar: Themeable {
-    func applyTheme(themeName: String) {
+    func applyTheme(_ themeName: String) {
         guard let theme = BrowserToolbar.Themes[themeName] else {
             log.error("Unable to apply unknown theme \(themeName)")
             return

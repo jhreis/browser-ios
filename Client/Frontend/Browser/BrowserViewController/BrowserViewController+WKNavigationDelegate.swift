@@ -5,7 +5,7 @@ private let log = Logger.browserLogger
 
 extension BrowserViewController: WKCompatNavigationDelegate {
 
-    func webViewDidStartProvisionalNavigation(webView: UIWebView, url: NSURL?) {
+    func webViewDidStartProvisionalNavigation(_ webView: UIWebView, url: URL?) {
         #if !BRAVE
             if tabManager.selectedTab?.webView !== webView {
                 return
@@ -30,7 +30,7 @@ extension BrowserViewController: WKCompatNavigationDelegate {
 
     // Recognize an Apple Maps URL. This will trigger the native app. But only if a search query is present. Otherwise
     // it could just be a visit to a regular page on maps.apple.com.
-    private func isAppleMapsURL(url: NSURL) -> Bool {
+    fileprivate func isAppleMapsURL(_ url: URL) -> Bool {
         if url.scheme == "http" || url.scheme == "https" {
             if url.host == "maps.apple.com" && url.query != nil {
                 return true
@@ -43,7 +43,7 @@ extension BrowserViewController: WKCompatNavigationDelegate {
     // used to be in this list. I have removed them because they now redirect to itunes.apple.com. If we special case
     // them then iOS will actually first open Safari, which then redirects to the app store. This works but it will
     // leave a 'Back to Safari' button in the status bar, which we do not want.
-    private func isStoreURL(url: NSURL) -> Bool {
+    fileprivate func isStoreURL(_ url: URL) -> Bool {
         if url.scheme == "http" || url.scheme == "https" {
             if url.host == "itunes.apple.com" {
                 return true
@@ -55,7 +55,7 @@ extension BrowserViewController: WKCompatNavigationDelegate {
     // This is the place where we decide what to do with a new navigation action. There are a number of special schemes
     // and http(s) urls that need to be handled in a different way. All the logic for that is inside this delegate
     // method.
-    func webViewDecidePolicyForNavigationAction(webView: UIWebView, url: NSURL?, inout shouldLoad: Bool) {
+    func webViewDecidePolicyForNavigationAction(_ webView: UIWebView, url: URL?, shouldLoad: inout Bool) {
         guard let url = url else { return }
         // Fixes 1261457 - Rich text editor fails because requests to about:blank are blocked
         if url.scheme == "about" && url.resourceSpecifier == "blank" {
@@ -68,12 +68,12 @@ extension BrowserViewController: WKCompatNavigationDelegate {
 
         if url.scheme == "tel" || url.scheme == "facetime" || url.scheme == "facetime-audio" {
             if let phoneNumber = url.resourceSpecifier.stringByRemovingPercentEncoding {
-                let alert = UIAlertController(title: phoneNumber, message: nil, preferredStyle: UIAlertControllerStyle.Alert)
-                alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment:"Alert Cancel Button"), style: UIAlertActionStyle.Cancel, handler: nil))
-                alert.addAction(UIAlertAction(title: NSLocalizedString("Call", comment:"Alert Call Button"), style: UIAlertActionStyle.Default, handler: { (action: UIAlertAction!) in
-                    UIApplication.sharedApplication().openURL(url)
+                let alert = UIAlertController(title: phoneNumber, message: nil, preferredStyle: UIAlertControllerStyle.alert)
+                alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment:"Alert Cancel Button"), style: UIAlertActionStyle.cancel, handler: nil))
+                alert.addAction(UIAlertAction(title: NSLocalizedString("Call", comment:"Alert Call Button"), style: UIAlertActionStyle.default, handler: { (action: UIAlertAction!) in
+                    UIApplication.shared.openURL(url)
                 }))
-                presentViewController(alert, animated: true, completion: nil)
+                present(alert, animated: true, completion: nil)
             }
             shouldLoad = false
             return
@@ -84,17 +84,17 @@ extension BrowserViewController: WKCompatNavigationDelegate {
         // iOS will always say yes. TODO Is this the same as isWhitelisted?
 
         if isAppleMapsURL(url) {
-            UIApplication.sharedApplication().openURL(url)
+            UIApplication.shared.openURL(url)
             shouldLoad = false
             return
         }
 
 
-        if let tab = tabManager.selectedTab where isStoreURL(url) {
+        if let tab = tabManager.selectedTab , isStoreURL(url) {
             struct StaticTag {
-                static let tag = NSUUID().hash
+                static let tag = (UUID() as NSUUID).hash
             }
-            let hasOneAlready = tab.bars.contains({ $0.tag == StaticTag.tag })
+            let hasOneAlready = tab.bars.contains(where: { $0.tag == StaticTag.tag })
             if hasOneAlready ?? false {
                 return
             }
@@ -105,7 +105,7 @@ extension BrowserViewController: WKCompatNavigationDelegate {
                                          buttons: [
                                             SnackButton(title: "Open", accessibilityIdentifier: "", callback: { bar in
                                                 self.tabManager.selectedTab?.removeSnackbar(bar)
-                                                UIApplication.sharedApplication().openURL(url)
+                                                UIApplication.shared.openURL(url)
                                             }),
                                             SnackButton(title: "Not now", accessibilityIdentifier: "", callback: { bar in
                                                 self.tabManager.selectedTab?.removeSnackbar(bar)
@@ -134,16 +134,16 @@ extension BrowserViewController: WKCompatNavigationDelegate {
         // prompting. On iOS9, depending on the scheme, iOS will prompt: "Firefox" wants to open "Twitter". It will ask
         // every time. There is no way around this prompt. (TODO Confirm this is true by adding them to the Info.plist)
 
-        UIApplication.sharedApplication().openURL(url)
+        UIApplication.shared.openURL(url)
         shouldLoad = false
     }
 
-    func webViewDidFinishNavigation(webView: UIWebView, url: NSURL?) {
+    func webViewDidFinishNavigation(_ webView: UIWebView, url: URL?) {
         guard let tab = tabManager.tabForWebView(webView) else { return }
         tabManager.expireSnackbars()
-        tab.lastExecutedTime = NSDate.now()
+        tab.lastExecutedTime = Date.now()
 
-        if let url = url where !ErrorPageHelper.isErrorPageURL(url) && !AboutUtils.isAboutHomeURL(url) {
+        if let url = url , !ErrorPageHelper.isErrorPageURL(url) && !AboutUtils.isAboutHomeURL(url) {
 
             updateProfileForLocationChange(tab)
 
@@ -171,7 +171,7 @@ extension BrowserViewController: WKCompatNavigationDelegate {
         addOpenInViewIfNeccessary(tab.url)
     }
 
-    func addOpenInViewIfNeccessary(url: NSURL?) {
+    func addOpenInViewIfNeccessary(_ url: URL?) {
         guard let url = url, let openInHelper = OpenInHelperFactory.helperForURL(url) else { return }
         let view = openInHelper.openInView
         webViewContainerToolbar.addSubview(view)
@@ -196,19 +196,19 @@ extension BrowserViewController: WKCompatNavigationDelegate {
         self.openInHelper = nil
     }
 
-    private func updateProfileForLocationChange(tab: Browser) {
+    fileprivate func updateProfileForLocationChange(_ tab: Browser) {
         var info = [String : AnyObject]()
         info["url"] = tab.displayURL
-        info["title"] = tab.title
-        info["visitType"] = 1 // VisitType.Link
-        info["isPrivate"] = tab.isPrivate
+        info["title"] = tab.title as AnyObject?
+        info["visitType"] = 1 as AnyObject? // VisitType.Link
+        info["isPrivate"] = tab.isPrivate as AnyObject?
         if !(tab.title?.isEmpty ?? true) {
             (profile as? BrowserProfile)?.onLocationChange(info)
         }
     }
 
 
-    func webViewDidFailNavigation(webView: UIWebView, withError error: NSError) {
+    func webViewDidFailNavigation(_ webView: UIWebView, withError error: NSError) {
         // Ignore the "Frame load interrupted" error that is triggered when we cancel a request
         // to open an external application and hand it over to UIApplication.openURL(). The result
         // will be that we switch to the external app, for example the app store, while keeping the
@@ -217,14 +217,14 @@ extension BrowserViewController: WKCompatNavigationDelegate {
             return
         }
 
-        if error.code == Int(CFNetworkErrors.CFURLErrorCancelled.rawValue) {
-            if let tab = tabManager.tabForWebView(webView) where tab === tabManager.selectedTab {
+        if error.code == Int(CFNetworkErrors.cfurlErrorCancelled.rawValue) {
+            if let tab = tabManager.tabForWebView(webView) , tab === tabManager.selectedTab {
                 urlBar.currentURL = tab.displayURL
             }
             return
         }
 
-        if let url = error.userInfo[NSURLErrorFailingURLErrorKey] as? NSURL {
+        if let url = error.userInfo[NSURLErrorFailingURLErrorKey] as? URL {
             ErrorPageHelper().showPage(error, forUrl: url, inWebView: webView)
         }
     }

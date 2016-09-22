@@ -5,18 +5,18 @@
 import Foundation
 
 class URIFixup {
-    static func getURL(entry: String) -> NSURL? {
+    static func getURL(_ entry: String) -> URL? {
         
-        let trimmed = entry.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+        let trimmed = entry.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         
         //punycoding -- conversion of possible unicode characters in hostname
-        let encoded = (trimmed as NSString).encodedURLString
+        let encoded = (trimmed as NSString).encodedURL
         if let urlString = encoded {
-            var url = NSURL(string: urlString)
+            var url = URL(string: urlString)
             
             // First check if the URL includes a scheme. This will handle
             // all valid requests starting with "http://", "about:", etc.
-            if !(url?.scheme.isEmpty ?? true) {
+            if !(url?.scheme?.isEmpty ?? true) {
                 return url
             }
             
@@ -24,13 +24,13 @@ class URIFixup {
             // make sure there's at least one "." in the host. This means
             // we'll allow single-word searches (e.g., "foo") at the expense
             // of breaking single-word hosts without a scheme (e.g., "localhost").
-            if urlString.rangeOfString(".") == nil {
+            if urlString.range(of: ".") == nil {
                 return nil
             }
             
             // If there is a ".", prepend "http://" and try again. Since this
             // is strictly an "http://" URL, we also require a host.
-            url = NSURL(string: "http://\(urlString)")
+            url = URL(string: "http://\(urlString)")
             if url?.host != nil {
                 return url
             }

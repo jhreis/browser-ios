@@ -8,13 +8,13 @@ import Shared
 
 class SessionData: NSObject, NSCoding {
     let currentPage: Int
-    let urls: [NSURL]
+    let urls: [URL]
     let lastUsedTime: Timestamp
     var currentTitle: String = ""
 
     var jsonDictionary: [String: AnyObject] {
         return [
-            "currentPage": String(self.currentPage),
+            "currentPage": String(self.currentPage) as AnyObject,
             "lastUsedTime": String(self.lastUsedTime),
             "urls": urls.map { $0.absoluteString }
         ]
@@ -28,7 +28,7 @@ class SessionData: NSObject, NSCoding {
         - parameter urls:            The sequence of URLs in this tab's session history.
         - parameter lastUsedTime:    The last time this tab was modified.
     **/
-    init(currentPage: Int, currentTitle: String?, urls: [NSURL], lastUsedTime: Timestamp) {
+    init(currentPage: Int, currentTitle: String?, urls: [URL], lastUsedTime: Timestamp) {
         self.currentPage = currentPage
         self.urls = urls
         self.lastUsedTime = lastUsedTime
@@ -39,16 +39,16 @@ class SessionData: NSObject, NSCoding {
     }
 
     required init?(coder: NSCoder) {
-        self.currentPage = coder.decodeObjectForKey("currentPage") as? Int ?? 0
-        self.urls = coder.decodeObjectForKey("urls") as? [NSURL] ?? []
-        self.lastUsedTime = UInt64(coder.decodeInt64ForKey("lastUsedTime")) ?? NSDate.now()
-        self.currentTitle = coder.decodeObjectForKey("currentTitle") as? String ?? ""
+        self.currentPage = coder.decodeObject(forKey: "currentPage") as? Int ?? 0
+        self.urls = coder.decodeObject(forKey: "urls") as? [URL] ?? []
+        self.lastUsedTime = UInt64(coder.decodeInt64ForKey("lastUsedTime")) ?? Date.now()
+        self.currentTitle = coder.decodeObject(forKey: "currentTitle") as? String ?? ""
     }
 
-    func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(currentPage, forKey: "currentPage")
-        coder.encodeObject(urls, forKey: "urls")
+    func encode(with coder: NSCoder) {
+        coder.encode(currentPage, forKey: "currentPage")
+        coder.encode(urls, forKey: "urls")
         coder.encodeInt64(Int64(lastUsedTime), forKey: "lastUsedTime")
-        coder.encodeObject(currentTitle, forKey: "currentTitle")
+        coder.encode(currentTitle, forKey: "currentTitle")
     }
 }

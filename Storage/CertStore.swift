@@ -8,24 +8,24 @@ import UIKit
 import Deferred
 
 /// In-memory certificate store.
-public class CertStore {
-    private var keys = Set<String>()
+open class CertStore {
+    fileprivate var keys = Set<String>()
 
     public init() {}
 
-    public func addCertificate(cert: SecCertificateRef) {
-        let data: NSData = SecCertificateCopyData(cert)
+    open func addCertificate(_ cert: SecCertificate) {
+        let data: Data = SecCertificateCopyData(cert) as Data
         let key = keyForData(data)
         keys.insert(key)
     }
 
-    public func containsCertificate(cert: SecCertificateRef) -> Bool {
-        let data: NSData = SecCertificateCopyData(cert)
+    open func containsCertificate(_ cert: SecCertificate) -> Bool {
+        let data: Data = SecCertificateCopyData(cert) as Data
         let key = keyForData(data)
         return keys.contains(key)
     }
 
-    private func keyForData(data: NSData) -> String {
+    fileprivate func keyForData(_ data: Data) -> String {
         return data.sha256.hexEncodedString
     }
 }

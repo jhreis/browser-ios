@@ -12,7 +12,7 @@ class SettingsNavigationController: UINavigationController {
             delegate.dismissPresentedModalViewController(self, animated: true)
             getApp().browserViewController.view.alpha = CGFloat(BraveUX.BrowserViewAlphaWhenShowingTabTray)
         } else {
-            self.dismissViewControllerAnimated(true, completion: {
+            self.dismiss(animated: true, completion: {
                 getApp().browserViewController.view.alpha = CGFloat(1.0)
             })
         }
@@ -23,5 +23,5 @@ class SettingsNavigationController: UINavigationController {
 }
 
 protocol PresentingModalViewControllerDelegate {
-    func dismissPresentedModalViewController(modalViewController: UIViewController, animated: Bool)
+    func dismissPresentedModalViewController(_ modalViewController: UIViewController, animated: Bool)
 }

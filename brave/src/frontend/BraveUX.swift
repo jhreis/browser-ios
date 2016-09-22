@@ -44,7 +44,7 @@ struct BraveUX {
     static let LocationBarEditModeTextColor = UIColor(white: 0/255.0, alpha: 1)
 
     static let LocationBarBackgroundColor = UIColor(white: 200/255.0, alpha: 0.3)
-    static let LocationBarBackgroundColor_PrivateMode = UIColor.blackColor()
+    static let LocationBarBackgroundColor_PrivateMode = UIColor.black
 
     static let LocationBarEditModeBackgroundColor_Private = UIColor(white: 0/255.0, alpha: 1.0)
     static let LocationBarEditModeTextColor_Private = UIColor(white: 242/255.0, alpha: 1)
@@ -55,8 +55,8 @@ struct BraveUX {
     static let LocationBarTextColor_URLHostComponent = LocationBarTextColor
 
     static let TextFieldCornerRadius = 14.0
-    static let TextFieldBorderColor_HasFocus = UIColor.grayColor()
-    static let TextFieldBorderColor_NoFocus = UIColor.blackColor()
+    static let TextFieldBorderColor_HasFocus = UIColor.gray
+    static let TextFieldBorderColor_NoFocus = UIColor.black
 
     static let CancelTextColor = LocationBarTextColor
     // The toolbar button color (for the Normal state). Using default highlight color ATM
@@ -73,5 +73,5 @@ struct BraveUX {
     static let TabTrayCellCornerRadius = 14.0
     static let TabTrayCellFaviconSize = 54.0
     static let TabTrayCellCloseButtonSize = 24.0
-    static let TabTrayCellBackgroundColor = UIColor.whiteColor()
+    static let TabTrayCellBackgroundColor = UIColor.white
 }

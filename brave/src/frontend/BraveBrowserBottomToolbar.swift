@@ -6,23 +6,23 @@ import SnapKit
 
 extension UIImage{
 
-    func alpha(value:CGFloat)->UIImage
+    func alpha(_ value:CGFloat)->UIImage
     {
         UIGraphicsBeginImageContextWithOptions(self.size, false, 0.0)
 
         let ctx = UIGraphicsGetCurrentContext();
         let area = CGRect(x: 0, y: 0, width: self.size.width, height: self.size.height);
 
-        CGContextScaleCTM(ctx, 1, -1);
-        CGContextTranslateCTM(ctx, 0, -area.size.height);
-        CGContextSetBlendMode(ctx, .Multiply);
-        CGContextSetAlpha(ctx, value);
-        CGContextDrawImage(ctx, area, self.CGImage);
+        ctx?.scaleBy(x: 1, y: -1);
+        ctx?.translateBy(x: 0, y: -area.size.height);
+        ctx?.setBlendMode(.multiply);
+        ctx?.setAlpha(value);
+        ctx?.draw(self.cgImage!, in: area);
 
         let newImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
 
-        return newImage;
+        return newImage!;
     }
 }
 
@@ -32,7 +32,7 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
     lazy var tabsButton: TabsButton = {
         let tabsButton = TabsButton()
         tabsButton.titleLabel.text = "\(tabsCount)"
-        tabsButton.addTarget(self, action: #selector(BraveBrowserBottomToolbar.onClickShowTabs), forControlEvents: UIControlEvents.TouchUpInside)
+        tabsButton.addTarget(self, action: #selector(BraveBrowserBottomToolbar.onClickShowTabs), for: UIControlEvents.touchUpInside)
         tabsButton.accessibilityLabel = NSLocalizedString("Show Tabs",
                                                           comment: "Accessibility Label for the tabs button in the browser toolbar")
         return tabsButton
@@ -42,28 +42,28 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
         let button = UIButton()
         let image = UIImage(named: "add")
         button.accessibilityLabel = NSLocalizedString("Add Tab", comment: "Accessibility label for the bottom toolbar add tab button")
-        button.addTarget(self, action: #selector(BraveBrowserBottomToolbar.onClickAddTab), forControlEvents: UIControlEvents.TouchUpInside)
+        button.addTarget(self, action: #selector(BraveBrowserBottomToolbar.onClickAddTab), for: UIControlEvents.touchUpInside)
 
         // Button is grey without upping the brightness
         // TODO remove this when the icon changes
-        func hackToMakeWhite(image: UIImage) -> UIImage {
+        func hackToMakeWhite(_ image: UIImage) -> UIImage {
             let brightnessFilter = CIFilter(name: "CIColorControls")!
             brightnessFilter.setValue(1.0, forKey: "inputBrightness")
             brightnessFilter.setValue(CIImage(image: image), forKey: kCIInputImageKey)
-            return UIImage(CGImage: CIContext(options:nil).createCGImage(brightnessFilter.outputImage!, fromRect:brightnessFilter.outputImage!.extent), scale: image.scale, orientation: .Up)
+            return UIImage(cgImage: CIContext(options:nil).createCGImage(brightnessFilter.outputImage!, from:brightnessFilter.outputImage!.extent)!, scale: image.scale, orientation: .up)
         }
 
-        button.setImage(hackToMakeWhite(image!), forState: .Normal)
+        button.setImage(hackToMakeWhite(image!), for: UIControlState())
         return button
     }()
 
     var leftSpacer = UIView()
     var rightSpacer = UIView()
 
-    private weak var clonedTabsButton: TabsButton?
+    fileprivate weak var clonedTabsButton: TabsButton?
     var tabsContainer = UIView()
 
-    private static weak var currentInstance: BraveBrowserBottomToolbar?
+    fileprivate static weak var currentInstance: BraveBrowserBottomToolbar?
 
     //let backForwardUnderlay = UIImageView(image: UIImage(named: "backForwardUnderlay"))
 
@@ -73,8 +73,8 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
 
         BraveBrowserBottomToolbar.currentInstance = self
 
-        bookmarkButton.hidden = true
-        stopReloadButton.hidden = true
+        bookmarkButton.isHidden = true
+        stopReloadButton.isHidden = true
 
         tabsContainer.addSubview(tabsButton)
         addSubview(tabsContainer)
@@ -82,26 +82,26 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
 
         //backForwardUnderlay.alpha = BraveUX.BackForwardEnabledButtonAlpha
 
-        bringSubviewToFront(backButton)
-        bringSubviewToFront(forwardButton)
+        bringSubview(toFront: backButton)
+        bringSubview(toFront: forwardButton)
 
         addSubview(addTabButton)
 
         addSubview(leftSpacer)
         addSubview(rightSpacer)
-        rightSpacer.userInteractionEnabled = false
-        leftSpacer.userInteractionEnabled = false
+        rightSpacer.isUserInteractionEnabled = false
+        leftSpacer.isUserInteractionEnabled = false
 
         if let img = forwardButton.imageView?.image {
-            forwardButton.setImage(img.alpha(BraveUX.BackForwardDisabledButtonAlpha), forState: .Disabled)
+            forwardButton.setImage(img.alpha(BraveUX.BackForwardDisabledButtonAlpha), for: .disabled)
         }
         if let img = backButton.imageView?.image {
-            backButton.setImage(img.alpha(BraveUX.BackForwardDisabledButtonAlpha), forState: .Disabled)
+            backButton.setImage(img.alpha(BraveUX.BackForwardDisabledButtonAlpha), for: .disabled)
         }
 
         var theme = Theme()
         theme.buttonTintColor = BraveUX.ActionButtonTintColor
-        theme.backgroundColor = UIColor.clearColor()
+        theme.backgroundColor = UIColor.clear
         BrowserToolbar.Themes[Theme.NormalMode] = theme
     }
 
@@ -109,12 +109,12 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func applyTheme(themeName: String) {
+    override func applyTheme(_ themeName: String) {
         super.applyTheme(themeName)
         tabsButton.applyTheme(themeName)
     }
 
-    class func updateTabCountDuplicatedButton(count: Int, animated: Bool) {
+    class func updateTabCountDuplicatedButton(_ count: Int, animated: Bool) {
         guard let instance = BraveBrowserBottomToolbar.currentInstance else { return }
         tabsCount = count
         URLBarView.updateTabCount(instance.tabsButton,
@@ -122,7 +122,7 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
     }
 
     func onClickAddTab() {
-        let app = UIApplication.sharedApplication().delegate as! AppDelegate
+        let app = UIApplication.shared.delegate as! AppDelegate
         let isPrivate = PrivateBrowsing.singleton.isOn
         if isPrivate {
             if #available(iOS 9, *) {
@@ -134,7 +134,7 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
         app.browserViewController.urlBar.browserLocationViewDidTapLocation(app.browserViewController.urlBar.locationView)
     }
 
-    func setAlphaOnAllExceptTabButton(alpha: CGFloat) {
+    func setAlphaOnAllExceptTabButton(_ alpha: CGFloat) {
         for item in [addTabButton, backButton, forwardButton, shareButton] {
             item.alpha = alpha
         }
@@ -159,9 +159,9 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
 
         styleHacks()
 
-        stopReloadButton.hidden = true
+        stopReloadButton.isHidden = true
 
-        func common(make: ConstraintMaker, bottomInset: Int = 0) {
+        func common(_ make: ConstraintMaker, bottomInset: Int = 0) {
             make.top.equalTo(self)
             make.bottom.equalTo(self).inset(bottomInset)
             make.width.equalTo(self).dividedBy(5)
@@ -200,7 +200,7 @@ class BraveBrowserBottomToolbar : BrowserToolbar {
         }
     }
 
-    override func updatePageStatus(isWebPage isWebPage: Bool) {
+    override func updatePageStatus(isWebPage: Bool) {
         super.updatePageStatus(isWebPage: isWebPage)
         
         let isPrivate = getApp().browserViewController.tabManager.selectedTab?.isPrivate ?? false

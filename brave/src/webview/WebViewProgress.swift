@@ -4,10 +4,30 @@
 // MIT License https://github.com/ninjinkun/NJKWebViewProgress/blob/master/LICENSE
 
 import Foundation
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 let completedUrlPath = "__completedprogress__"
 
-public class WebViewProgress
+open class WebViewProgress
 {
     var loadingCount: Int = 0
     var maxLoadCount: Int = 0
@@ -18,7 +38,7 @@ public class WebViewProgress
     let finalProgressValue: Double = 0.9
 
     weak var webView: BraveWebView?
-    var currentURL: NSURL?
+    var currentURL: URL?
 
     /* After all efforts to catch page load completion in WebViewProgress, sometimes, load completion is *still* missed.
      As a backup we can do KVO on 'loading'. Which can arrive too early (from subrequests) -and frequently- so delay checking by an arbitrary amount
@@ -26,37 +46,37 @@ public class WebViewProgress
      TODO figure this out. http://thestar.com exhibits this sometimes.
      Possibly a bug in UIWebView with load completion, but hard to repro, a reload of a page always seems to complete. */
     class LoadingObserver : NSObject {
-        private weak var webView: BraveWebView?
-        private var timer: NSTimer?
+        fileprivate weak var webView: BraveWebView?
+        fileprivate var timer: Timer?
 
         let kvoLoading = "loading"
 
         init(webView:BraveWebView) {
             self.webView = webView
             super.init()
-            webView.addObserver(self, forKeyPath: kvoLoading, options: .New, context: nil)
+            webView.addObserver(self, forKeyPath: kvoLoading, options: .new, context: nil)
             webView.removeProgressObserversOnDeinit = { [unowned self] (view) in
                 view.removeObserver(self, forKeyPath: "loading")
             }
         }
 
         @objc func delayedCompletionCheck() {
-            if (webView?.loading ?? false) || webView?.estimatedProgress > 0.99 {
+            if (webView?.isLoading ?? false) || webView?.estimatedProgress > 0.99 {
                 return
             }
 
-            let readyState = webView?.stringByEvaluatingJavaScriptFromString("document.readyState")?.lowercaseString
+            let readyState = webView?.stringByEvaluatingJavaScript(from: "document.readyState")?.lowercased()
             if readyState == "loaded" || readyState == "complete" {
                 webView?.progress?.completeProgress()
             }
         }
 
-        @objc override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
-            guard let path = keyPath where path == kvoLoading else { return }
+        @objc override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+            guard let path = keyPath , path == kvoLoading else { return }
             postAsyncToMain(0) { // ensure closure is on main thread, by-definition this func can be off-main
-                if !(self.webView?.loading ?? true) && self.webView?.estimatedProgress < 1.0 {
+                if !(self.webView?.isLoading ?? true) && self.webView?.estimatedProgress < 1.0 {
                     self.timer?.invalidate()
-                    self.timer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(LoadingObserver.delayedCompletionCheck), userInfo: nil, repeats: false)
+                    self.timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(LoadingObserver.delayedCompletionCheck), userInfo: nil, repeats: false)
                 } else {
                     self.timer?.invalidate()
                 }
@@ -67,11 +87,11 @@ public class WebViewProgress
 
     init(parent: BraveWebView) {
         webView = parent
-        currentURL = parent.request?.URL
+        currentURL = parent.request?.url
         loadingObserver = LoadingObserver(webView: parent)
     }
 
-    func setProgress(progress: Double) {
+    func setProgress(_ progress: Double) {
         if (progress > webView?.estimatedProgress || progress == 0 || progress > 0.99) {
             webView?.estimatedProgress = progress
 
@@ -102,7 +122,7 @@ public class WebViewProgress
         setProgress(1.0)
     }
 
-    public func reset() {
+    open func reset() {
         maxLoadCount = 0
         loadingCount = 0
         interactiveCount = 0
@@ -110,45 +130,45 @@ public class WebViewProgress
         webView?.internalIsLoadingEndedFlag = false
     }
 
-    public func pathContainsCompleted(path: String?) -> Bool {
-        return path?.rangeOfString(completedUrlPath) != nil
+    open func pathContainsCompleted(_ path: String?) -> Bool {
+        return path?.range(of: completedUrlPath) != nil
     }
 
-    public func shouldStartLoadWithRequest(request: NSURLRequest, navigationType:UIWebViewNavigationType) ->Bool {
-        if (pathContainsCompleted(request.URL?.fragment)) {
+    open func shouldStartLoadWithRequest(_ request: URLRequest, navigationType:UIWebViewNavigationType) ->Bool {
+        if (pathContainsCompleted(request.url?.fragment)) {
             completeProgress()
             return false
         }
 
         var isFragmentJump: Bool = false
 
-        if let fragment = request.URL?.fragment {
-            let nonFragmentUrl = request.URL?.absoluteString.stringByReplacingOccurrencesOfString("#" + fragment,
-                                                                                                  withString: "")
+        if let fragment = request.url?.fragment {
+            let nonFragmentUrl = request.url?.absoluteString.replacingOccurrences(of: "#" + fragment,
+                                                                                                  with: "")
 
-            isFragmentJump = nonFragmentUrl == webView?.request?.URL?.absoluteString
+            isFragmentJump = nonFragmentUrl == webView?.request?.url?.absoluteString
         }
 
-        let isTopLevelNavigation = request.mainDocumentURL == request.URL
+        let isTopLevelNavigation = request.mainDocumentURL == request.url
 
-        let isHTTPOrLocalFile = request.URL?.scheme.startsWith("http") == true ||
+        let isHTTPOrLocalFile = request.url?.scheme.startsWith("http") == true ||
             request.URL?.scheme.startsWith("file") == true
 
         if (!isFragmentJump && isHTTPOrLocalFile && isTopLevelNavigation) {
-            currentURL = request.URL
+            currentURL = request.url
             reset()
         }
         return true
     }
 
-    public func webViewDidStartLoad() {
+    open func webViewDidStartLoad() {
         loadingCount += 1
         maxLoadCount = max(maxLoadCount, loadingCount)
         startProgress()
 
         func injectLoadDetection() {
             if let scheme = webView?.request?.mainDocumentURL?.scheme,
-                host = webView?.request?.mainDocumentURL?.host
+                let host = webView?.request?.mainDocumentURL?.host
             {
                 let waitForCompleteJS = String(format:
                     "if (!__waitForCompleteJS__) {" +
@@ -162,14 +182,14 @@ public class WebViewProgress
                                                scheme,
                                                host,
                                                completedUrlPath);
-                webView?.stringByEvaluatingJavaScriptFromString(waitForCompleteJS)
+                webView?.stringByEvaluatingJavaScript(from: waitForCompleteJS)
             }
         }
 
         injectLoadDetection()
     }
 
-    public func webViewDidFinishLoad(documentReadyState documentReadyState:String?) {
+    open func webViewDidFinishLoad(documentReadyState:String?) {
         loadingCount -= 1
         incrementProgress()
 
@@ -186,9 +206,9 @@ public class WebViewProgress
                 interactiveCount += 1
                 if let webView = webView {
                     if  interactiveCount == 1 {
-                        NSNotificationCenter.defaultCenter().postNotificationName(BraveWebViewConstants.kNotificationPageInteractive, object: webView)
+                        NotificationCenter.default.post(name: Notification.Name(rawValue: BraveWebViewConstants.kNotificationPageInteractive), object: webView)
                     }
-                    if !webView.loading {
+                    if !webView.isLoading {
                         completeProgress()
                     }
                 }
@@ -199,7 +219,7 @@ public class WebViewProgress
         }
     }
     
-    public func didFailLoadWithError() {
+    open func didFailLoadWithError() {
         webViewDidFinishLoad(documentReadyState: nil)
     }
 }

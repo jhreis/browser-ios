@@ -6,7 +6,7 @@ import SnapKit
 class BraveBrowserViewController : BrowserViewController {
     var historySwiper = HistorySwiper()
 
-    override func applyTheme(themeName: String) {
+    override func applyTheme(_ themeName: String) {
         super.applyTheme(themeName)
 
         toolbar?.accessibilityLabel = "toolbar thing"
@@ -17,17 +17,17 @@ class BraveBrowserViewController : BrowserViewController {
         urlBar.accessibilityLabel = "BraveUrlBar"
 
         // TODO sorry, I am in a rush, but this needs to be removed from the view heirarchy properly
-        headerBackdrop.backgroundColor = UIColor.clearColor()
+        headerBackdrop.backgroundColor = UIColor.clear
         headerBackdrop.alpha = 0
-        headerBackdrop.hidden = true
+        headerBackdrop.isHidden = true
 
-        header.blurStyle = .Dark
-        footerBackground?.blurStyle = .Dark
+        header.blurStyle = .dark
+        footerBackground?.blurStyle = .dark
 
         toolbar?.applyTheme(themeName)
     }
 
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
         struct RunOnceAtStartup { static var ran = false }
@@ -40,7 +40,7 @@ class BraveBrowserViewController : BrowserViewController {
         RunOnceAtStartup.ran = true
     }
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
         self.updateToolbarStateForTraitCollection(self.traitCollection)
@@ -61,28 +61,28 @@ class BraveBrowserViewController : BrowserViewController {
         statusBarOverlay.backgroundColor = DeviceInfo.isBlurSupported() ? UIColor(white: 0.255, alpha: 1.0) : UIColor.blackColor()
     }
 
-    func updateBraveShieldButtonState(animated animated: Bool) {
+    func updateBraveShieldButtonState(animated: Bool) {
         guard let s = tabManager.selectedTab?.webView?.braveShieldState else { return }
         let up = s.isNotSet() || !s.isAllOff()
         (urlBar as! BraveURLBarView).setBraveButtonState(shieldsUp: up, animated: animated)
     }
 
-    override func selectedTabChanged(selected: Browser) {
+    override func selectedTabChanged(_ selected: Browser) {
         historySwiper.setup(topLevelView: self.view, webViewContainer: self.webViewContainer)
         for swipe in [historySwiper.goBackSwipe, historySwiper.goForwardSwipe] {
-            selected.webView?.scrollView.panGestureRecognizer.requireGestureRecognizerToFail(swipe)
-            scrollController.panGesture.requireGestureRecognizerToFail(swipe)
+            selected.webView?.scrollView.panGestureRecognizer.require(toFail: swipe)
+            scrollController.panGesture.require(toFail: swipe)
         }
 
         if let webView = selected.webView {
-            webViewContainer.insertSubview(webView, atIndex: 0)
+            webViewContainer.insertSubview(webView, at: 0)
             webView.snp_makeConstraints { make in
                 make.top.equalTo(webViewContainerToolbar.snp_bottom)
                 make.left.right.bottom.equalTo(self.webViewContainer)
             }
 
             urlBar.updateProgressBar(Float(webView.estimatedProgress), dueToTabChange: true)
-            urlBar.updateReloadStatus(webView.loading)
+            urlBar.updateReloadStatus(webView.isLoading)
             updateBraveShieldButtonState(animated: false)
 
             let bravePanel = getApp().braveTopViewController.rightSidePanel
@@ -134,7 +134,7 @@ class BraveBrowserViewController : BrowserViewController {
         }
     }
     
-    override func updateToolbarStateForTraitCollection(newCollection: UITraitCollection) {
+    override func updateToolbarStateForTraitCollection(_ newCollection: UITraitCollection) {
         super.updateToolbarStateForTraitCollection(newCollection)
 
         heightConstraint?.updateOffset(-BraveApp.statusBarHeight())
@@ -144,7 +144,7 @@ class BraveBrowserViewController : BrowserViewController {
         }
     }
 
-    override func showHomePanelController(inline inline:Bool) {
+    override func showHomePanelController(inline:Bool) {
         super.showHomePanelController(inline: inline)
         postAsyncToMain(0.1) {
             if UIResponder.currentFirstResponder() == nil {
@@ -157,7 +157,7 @@ class BraveBrowserViewController : BrowserViewController {
         super.hideHomePanelController()
 
         // For bizzaro reasons, this can take a few delayed attempts. The first responder is getting set to nil -I *did* search the codebase for any resigns that could cause this.
-        func setSelfAsFirstResponder(attempt: Int) {
+        func setSelfAsFirstResponder(_ attempt: Int) {
             if UIResponder.currentFirstResponder() === self {
                 return
             }
@@ -176,9 +176,9 @@ class BraveBrowserViewController : BrowserViewController {
         }
     }
 
-    func newTabForDesktopSite(url url: NSURL) {
+    func newTabForDesktopSite(url: URL) {
         let tab = tabManager.addTabForDesktopSite()
-        tab.loadRequest(NSURLRequest(URL: url))
+        tab.loadRequest(URLRequest(url: url))
     }
 }
 
@@ -189,7 +189,7 @@ extension UIResponder {
     }
 
     static func currentFirstResponder() -> UIResponder? {
-        if (UIApplication.sharedApplication().sendAction(#selector(findFirstResponder), to: nil, from: nil, forEvent: nil)) {
+        if (UIApplication.shared.sendAction(#selector(findFirstResponder), to: nil, from: nil, for: nil)) {
             return _firstResponder
         } else {
             return nil

@@ -1,6 +1,11 @@
 BUILD_TOOL = xcodebuild
 BUILD_SCHEME = SQLite Mac
-BUILD_ARGUMENTS = -scheme "$(BUILD_SCHEME)"
+IOS_SIMULATOR = iPhone 6
+ifeq ($(BUILD_SCHEME),SQLite iOS)
+	BUILD_ARGUMENTS = -scheme "$(BUILD_SCHEME)" -destination "platform=iOS Simulator,name=$(IOS_SIMULATOR)"
+else
+	BUILD_ARGUMENTS = -scheme "$(BUILD_SCHEME)"
+endif
 
 XCPRETTY := $(shell command -v xcpretty)
 SWIFTCOV := $(shell command -v swiftcov)
@@ -48,6 +53,6 @@ repl:
 		swift -F '$(TMPDIR)/SQLite.swift/Build/Products/Debug'
 
 sloc:
-	@zsh -c "grep -vE '^ *//|^$$' SQLite/*.{swift,h,c} | wc -l"
+	@zsh -c "grep -vE '^ *//|^$$' SQLite/*/*.{swift,h,m} | wc -l"
 
 .PHONY: test coverage clean repl sloc

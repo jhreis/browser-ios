@@ -2,7 +2,7 @@
 
 protocol WindowTouchFilter: class {
     // return true to block the event
-    func filterTouch(touch: UITouch) -> Bool
+    func filterTouch(_ touch: UITouch) -> Bool
 }
 
 class BraveMainWindow : UIWindow {
@@ -14,21 +14,21 @@ class BraveMainWindow : UIWindow {
         weak var value : WindowTouchFilter?
         init (value: WindowTouchFilter) { self.value = value }
     }
-    private var delegatesForTouchFiltering = [Weak_WindowTouchFilter]()
+    fileprivate var delegatesForTouchFiltering = [Weak_WindowTouchFilter]()
 
     // Guarantee: *All* filters will see the event.
     // *Any* filter can stop the call to super.sendEvent
-    func addTouchFilter(filter: WindowTouchFilter) {
+    func addTouchFilter(_ filter: WindowTouchFilter) {
         delegatesForTouchFiltering = delegatesForTouchFiltering.filter { $0.value != nil }
         delegatesForTouchFiltering.append(Weak_WindowTouchFilter(value: filter))
     }
 
-    override func sendEvent(event: UIEvent) {
+    override func sendEvent(_ event: UIEvent) {
         contextMenuHandler.sendEvent(event, window: self)
         blankTargetLinkHandler.sendEvent(event, window: self)
 
         let braveTopVC = getApp().rootViewController.visibleViewController as? BraveTopViewController
-        if let _ = braveTopVC, touches = event.touchesForWindow(self), let touch = touches.first where touches.count == 1 {
+        if let _ = braveTopVC, let touches = event.touches(for: self), let touch = touches.first , touches.count == 1 {
             var eaten = false
             for filter in delegatesForTouchFiltering where filter.value != nil {
                 if filter.value!.filterTouch(touch) {

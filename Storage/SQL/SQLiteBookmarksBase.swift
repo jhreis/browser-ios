@@ -8,7 +8,7 @@ import Shared
 
 private let log = Logger.syncLogger
 
-public class SQLiteBookmarks: BookmarksModelFactorySource {
+open class SQLiteBookmarks: BookmarksModelFactorySource {
     let db: BrowserDB
     let favicons: FaviconsTable<Favicon>
 
@@ -20,9 +20,9 @@ public class SQLiteBookmarks: BookmarksModelFactorySource {
         self.favicons = FaviconsTable<Favicon>()
     }
 
-    public var modelFactory: Deferred<Maybe<BookmarksModelFactory>> {
+    open var modelFactory: Deferred<Maybe<BookmarksModelFactory>> {
         struct Singleton {
-            static var token: dispatch_once_t = 0
+            static var token: Int = 0
             static var instance: Deferred<Maybe<BookmarksModelFactory>>!
         }
 

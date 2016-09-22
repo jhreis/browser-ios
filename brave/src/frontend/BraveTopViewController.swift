@@ -27,10 +27,10 @@ class BraveTopViewController : UIViewController {
         fatalError()
     }
 
-    private func addVC(vc: UIViewController) {
+    fileprivate func addVC(_ vc: UIViewController) {
         addChildViewController(vc)
         view.addSubview(vc.view)
-        vc.didMoveToParentViewController(self)
+        vc.didMove(toParentViewController: self)
     }
 
     override func viewDidLoad() {
@@ -60,11 +60,11 @@ class BraveTopViewController : UIViewController {
 
         setupBrowserConstraints()
 
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(onClickLeftSlideOut), name: kNotificationLeftSlideOutClicked, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onClickLeftSlideOut), name: NSNotification.Name(rawValue: kNotificationLeftSlideOutClicked), object: nil)
 
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(onClickBraveButton), name: kNotificationBraveButtonClicked, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onClickBraveButton), name: NSNotification.Name(rawValue: kNotificationBraveButtonClicked), object: nil)
 
-        clickDetectionView.addTarget(self, action: #selector(BraveTopViewController.dismissAllSidePanels), forControlEvents: UIControlEvents.TouchUpInside)
+        clickDetectionView.addTarget(self, action: #selector(BraveTopViewController.dismissAllSidePanels), for: UIControlEvents.touchUpInside)
 
         mainSidePanel.browserViewController = browserViewController
     }
@@ -73,8 +73,8 @@ class BraveTopViewController : UIViewController {
         if leftPanelShowing() {
             mainSidePanel.willHide()
             togglePanel(mainSidePanel)
-            leftSidePanelButtonAndUnderlay?.selected = false
-            leftSidePanelButtonAndUnderlay?.underlay.hidden = true
+            leftSidePanelButtonAndUnderlay?.isSelected = false
+            leftSidePanelButtonAndUnderlay?.underlay.isHidden = true
         }
 
         if rightPanelShowing() {
@@ -82,7 +82,7 @@ class BraveTopViewController : UIViewController {
         }
     }
 
-    private func setupBrowserConstraints() {
+    fileprivate func setupBrowserConstraints() {
         browserViewController.view.snp_makeConstraints {
             make in
             make.bottom.equalTo(view)
@@ -90,13 +90,13 @@ class BraveTopViewController : UIViewController {
             let _rightConstraint = make.right.equalTo(view).constraint
             let _leftConstraint = make.left.equalTo(view).constraint
 
-            if UIDevice.currentDevice().userInterfaceIdiom == .Phone {
+            if UIDevice.current.userInterfaceIdiom == .phone {
                 rightConstraint = _rightConstraint
                 leftConstraint = _leftConstraint
             }
         }
 
-        if UIDevice.currentDevice().userInterfaceIdiom != .Phone {
+        if UIDevice.current.userInterfaceIdiom != .phone {
             browserViewController.header.snp_makeConstraints { make in
                 if rightConstraint == nil {
                     leftConstraint = make.left.equalTo(view).constraint
@@ -106,8 +106,8 @@ class BraveTopViewController : UIViewController {
         }
     }
 
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.LightContent
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.lightContent
     }
 
     func leftPanelShowing() -> Bool {
@@ -118,9 +118,9 @@ class BraveTopViewController : UIViewController {
         return rightSidePanel.view.frame.width == CGFloat(BraveUX.WidthOfSlideOut)
     }
 
-    override func prefersStatusBarHidden() -> Bool {
-        if UIDevice.currentDevice().userInterfaceIdiom != .Phone {
-            return super.prefersStatusBarHidden()
+    override var prefersStatusBarHidden : Bool {
+        if UIDevice.current.userInterfaceIdiom != .phone {
+            return super.prefersStatusBarHidden
         }
 
         if BraveApp.isIPhoneLandscape() {
@@ -130,20 +130,20 @@ class BraveTopViewController : UIViewController {
         return leftPanelShowing() || rightPanelShowing()
     }
 
-    func onClickLeftSlideOut(notification: NSNotification) {
+    func onClickLeftSlideOut(_ notification: Notification) {
         leftSidePanelButtonAndUnderlay = notification.object as? ButtonWithUnderlayView
-        if !rightSidePanel.view.hidden {
+        if !rightSidePanel.view.isHidden {
             togglePanel(rightSidePanel)
         }
         togglePanel(mainSidePanel)
     }
 
-    func onClickBraveButton(notification: NSNotification) {
-        if !mainSidePanel.view.hidden {
+    func onClickBraveButton(_ notification: Notification) {
+        if !mainSidePanel.view.isHidden {
             togglePanel(mainSidePanel)
         }
 
-        if self.browserViewController.tabManager.selectedTab?.displayURL?.absoluteString.isEmpty ?? true {
+        if self.browserViewController.tabManager.selectedTab?.displayURL?.absoluteString?.isEmpty ?? true {
             return
         }
 
@@ -151,18 +151,18 @@ class BraveTopViewController : UIViewController {
         togglePanel(rightSidePanel)
     }
 
-    func togglePanel(panel: SidePanelBaseViewController) {
-        let willShow = panel.view.hidden
+    func togglePanel(_ panel: SidePanelBaseViewController) {
+        let willShow = panel.view.isHidden
         if panel === mainSidePanel {
-            leftSidePanelButtonAndUnderlay?.selected = willShow
+            leftSidePanelButtonAndUnderlay?.isSelected = willShow
             leftSidePanelButtonAndUnderlay?.hideUnderlay(!willShow)
-        } else if panel.view.hidden && !panel.canShow {
+        } else if panel.view.isHidden && !panel.canShow {
             return
         }
 
         if clickDetectionView.superview != nil {
-            clickDetectionView.userInteractionEnabled = false
-            UIView.animateWithDuration(0.2, animations: {
+            clickDetectionView.isUserInteractionEnabled = false
+            UIView.animate(withDuration: 0.2, animations: {
                 self.clickDetectionView.alpha = 0
                 }, completion: { _ in
                     self.clickDetectionView.removeFromSuperview()
@@ -171,7 +171,7 @@ class BraveTopViewController : UIViewController {
 
         if willShow {
             clickDetectionView.alpha = 0
-            clickDetectionView.userInteractionEnabled = true
+            clickDetectionView.isUserInteractionEnabled = true
 
             view.addSubview(clickDetectionView)
             clickDetectionView.snp_remakeConstraints {
@@ -182,15 +182,15 @@ class BraveTopViewController : UIViewController {
             }
             clickDetectionView.layoutIfNeeded()
 
-            UIView.animateWithDuration(0.25) {
+            UIView.animate(withDuration: 0.25, animations: {
                 self.clickDetectionView.alpha = 1
-            }
+            }) 
         }
         panel.setHomePanelDelegate(self)
         panel.showPanel(willShow, parentSideConstraints: [leftConstraint, rightConstraint])
     }
 
-    func updateBookmarkStatus(isBookmarked: Bool) {
+    func updateBookmarkStatus(_ isBookmarked: Bool) {
 //        let currentURL = browserViewController.urlBar.currentURL
         let currentTab = browserViewController.tabManager.selectedTab
         let currentURL = currentTab?.displayURL
@@ -199,12 +199,12 @@ class BraveTopViewController : UIViewController {
 }
 
 extension BraveTopViewController : HomePanelDelegate {
-    func homePanelDidRequestToSignIn(homePanel: HomePanel) {}
-    func homePanelDidRequestToCreateAccount(homePanel: HomePanel) {}
-    func homePanel(homePanel: HomePanel, didSelectURL url: NSURL, visitType: VisitType) {
+    func homePanelDidRequestToSignIn(_ homePanel: HomePanel) {}
+    func homePanelDidRequestToCreateAccount(_ homePanel: HomePanel) {}
+    func homePanel(_ homePanel: HomePanel, didSelectURL url: URL, visitType: VisitType) {
         print("selected \(url)")
         browserViewController.urlBar.leaveOverlayMode()
-        browserViewController.tabManager.selectedTab?.loadRequest(NSURLRequest(URL: url))
+        browserViewController.tabManager.selectedTab?.loadRequest(URLRequest(url: url))
         togglePanel(mainSidePanel)
     }
 }

@@ -14,9 +14,9 @@ public struct ShareItem {
     public let favicon: Favicon?
     public let folderId: String?
     public let folderTitle: String?
-    public let completion: dispatch_block_t?
+    public let completion: ()->()?
 
-    public init(url: String, title: String?, favicon: Favicon?, folderId:String? = nil, folderTitle:String? = nil, completion: dispatch_block_t? = nil) {
+    public init(url: String, title: String?, favicon: Favicon?, folderId:String? = nil, folderTitle:String? = nil, completion: @escaping ()->()? = nil) {
         self.url = url
         self.title = title
         self.favicon = favicon
@@ -27,5 +27,5 @@ public struct ShareItem {
 }
 
 public protocol ShareToDestination {
-    func shareItem(item: ShareItem)
+    func shareItem(_ item: ShareItem)
 }

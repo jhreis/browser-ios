@@ -11,7 +11,7 @@ class HttpsEverywhereTest: XCTestCase {
             expectationForNotification(HttpsEverywhere.kNotificationDataLoaded, object: nil, handler:nil)
             HttpsEverywhere.singleton.networkFileLoader.loadData()
             var isOk = true
-            waitForExpectationsWithTimeout(20) { (error:NSError?) -> Void in
+            waitForExpectations(timeout: 20) { (error:NSError?) -> Void in
                 if let _ = error {
                     isOk = false
                     XCTAssert(false, "load data failed")
@@ -26,25 +26,25 @@ class HttpsEverywhereTest: XCTestCase {
         let urls = ["motherboard.vice.com", "thestar.com", "www.thestar.com", "apple.com", "xkcd.com"]
 
         for url in urls {
-            let redirected = HttpsEverywhere.singleton.tryRedirectingUrl(NSURL(string: "http://" + url)!)
+            let redirected = HttpsEverywhere.singleton.tryRedirectingUrl(URL(string: "http://" + url)!)
             XCTAssert(redirected != nil && redirected!.scheme.startsWith("https"), "failed:" + url)
         }
 
         let exceptions = ["m.slashdot.com"]
 
         for url in exceptions {
-            let redirected = HttpsEverywhere.singleton.tryRedirectingUrl(NSURL(string: "http://" + url)!)
+            let redirected = HttpsEverywhere.singleton.tryRedirectingUrl(URL(string: "http://" + url)!)
             XCTAssert(redirected == nil)
         }
 
         // test suffix maintained
-        let url = HttpsEverywhere.singleton.tryRedirectingUrl(NSURL(string: "http://www.googleadservices.com/pagead/aclk?sa=L&ai=CD0d/")!)
+        let url = HttpsEverywhere.singleton.tryRedirectingUrl(URL(string: "http://www.googleadservices.com/pagead/aclk?sa=L&ai=CD0d/")!)
         XCTAssert(url != nil && url!.absoluteString.hasSuffix("?sa=L&ai=CD0d/"))
     }
 
-    private func doTest(httpseOn on: Bool, group: [String]) {
+    fileprivate func doTest(httpseOn on: Bool, group: [String]) {
         WebViewLoadTestUtils.httpseEnabled(on)
-        measureBlock({
+        measure({
             WebViewLoadTestUtils.loadSites(self, sites: group)
         })
     }

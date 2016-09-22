@@ -4,22 +4,22 @@ let TabsBarHeight = CGFloat(29)
 
 // To hide the curve effect
 class HideCurveView : CurveView {
-    override func drawRect(rect: CGRect) {}
+    override func draw(_ rect: CGRect) {}
 }
 
 extension UILabel {
-    func boldRange(range: Range<String.Index>) {
+    func boldRange(_ range: Range<String.Index>) {
         if let text = self.attributedText {
             let attr = NSMutableAttributedString(attributedString: text)
-            let start = text.string.startIndex.distanceTo(range.startIndex)
-            let length = range.startIndex.distanceTo(range.endIndex)
-            attr.addAttributes([NSFontAttributeName: UIFont.boldSystemFontOfSize(self.font.pointSize)], range: NSMakeRange(start, length))
+            let start = text.string.characters.distance(from: text.string.startIndex, to: range.lowerBound)
+            let length = <#T##String.CharacterView corresponding to your index##String.CharacterView#>.distance(from: range.lowerBound, to: range.upperBound)
+            attr.addAttributes([NSFontAttributeName: UIFont.boldSystemFont(ofSize: self.font.pointSize)], range: NSMakeRange(start, length))
             self.attributedText = attr
         }
     }
 
-    func boldSubstring(substr: String) {
-        let range = self.text?.rangeOfString(substr)
+    func boldSubstring(_ substr: String) {
+        let range = self.text?.range(of: substr)
         if let r = range {
             boldRange(r)
         }
@@ -29,9 +29,9 @@ extension UILabel {
 class ButtonWithUnderlayView : UIButton {
     lazy var starView: UIImageView = {
         let v = UIImageView()
-        v.contentMode = .Center
+        v.contentMode = .center
         self.addSubview(v)
-        v.userInteractionEnabled = false
+        v.isUserInteractionEnabled = false
 
         v.snp_makeConstraints {
             make in
@@ -42,29 +42,29 @@ class ButtonWithUnderlayView : UIButton {
 
     lazy var underlay: UIView = {
         let v = UIView()
-        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
+        if UIDevice.current.userInterfaceIdiom == .pad {
             v.backgroundColor = BraveUX.ProgressBarColor
             v.layer.cornerRadius = 4
             v.layer.borderWidth = 1
-            v.layer.borderColor = UIColor.clearColor().CGColor
+            v.layer.borderColor = UIColor.clear.cgColor
             v.layer.masksToBounds = true
         }
-        v.userInteractionEnabled = false
-        v.hidden = true
+        v.isUserInteractionEnabled = false
+        v.isHidden = true
 
         return v
     }()
 
-    func hideUnderlay(hide: Bool) {
-        underlay.hidden = hide
-        starView.hidden = !hide
+    func hideUnderlay(_ hide: Bool) {
+        underlay.isHidden = hide
+        starView.isHidden = !hide
     }
 
-    func setStarImageBookmarked(on: Bool) {
+    func setStarImageBookmarked(_ on: Bool) {
         if on {
-            starView.image = UIImage(named: "listpanel_bookmarked_star")!.imageWithRenderingMode(.AlwaysOriginal)
+            starView.image = UIImage(named: "listpanel_bookmarked_star")!.withRenderingMode(.alwaysOriginal)
         } else {
-            starView.image = UIImage(named: "listpanel_notbookmarked_star")!.imageWithRenderingMode(.AlwaysTemplate)
+            starView.image = UIImage(named: "listpanel_notbookmarked_star")!.withRenderingMode(.alwaysTemplate)
         }
     }
 }
@@ -73,7 +73,7 @@ class BraveURLBarView : URLBarView {
 
     static var CurrentHeight = UIConstants.ToolbarHeight
 
-    private static weak var currentInstance: BraveURLBarView?
+    fileprivate static weak var currentInstance: BraveURLBarView?
     lazy var leftSidePanelButton: ButtonWithUnderlayView = { return ButtonWithUnderlayView() }()
     lazy var braveButton = { return UIButton() }()
 
@@ -89,16 +89,16 @@ class BraveURLBarView : URLBarView {
         addSubview(braveButton)
         super.commonInit()
 
-        leftSidePanelButton.addTarget(self, action: #selector(onClickLeftSlideOut), forControlEvents: UIControlEvents.TouchUpInside)
-        leftSidePanelButton.setImage(UIImage(named: "listpanel")?.imageWithRenderingMode(.AlwaysTemplate), forState: .Normal)
-        leftSidePanelButton.setImage(UIImage(named: "listpanel_down")?.imageWithRenderingMode(.AlwaysTemplate), forState: .Selected)
+        leftSidePanelButton.addTarget(self, action: #selector(onClickLeftSlideOut), for: UIControlEvents.touchUpInside)
+        leftSidePanelButton.setImage(UIImage(named: "listpanel")?.withRenderingMode(.alwaysTemplate), for: UIControlState())
+        leftSidePanelButton.setImage(UIImage(named: "listpanel_down")?.withRenderingMode(.alwaysTemplate), for: .selected)
         leftSidePanelButton.accessibilityLabel = NSLocalizedString("Bookmarks and History Panel", comment: "Button to show the bookmarks and history panel")
         leftSidePanelButton.tintColor = BraveUX.ActionButtonTintColor
         leftSidePanelButton.setStarImageBookmarked(false)
 
-        braveButton.addTarget(self, action: #selector(onClickBraveButton) , forControlEvents: UIControlEvents.TouchUpInside)
-        braveButton.setImage(UIImage(named: "bravePanelButton"), forState: .Normal)
-        braveButton.setImage(UIImage(named: "bravePanelButtonOff"), forState: .Selected)
+        braveButton.addTarget(self, action: #selector(onClickBraveButton) , for: UIControlEvents.touchUpInside)
+        braveButton.setImage(UIImage(named: "bravePanelButton"), for: UIControlState())
+        braveButton.setImage(UIImage(named: "bravePanelButtonOff"), for: .selected)
         braveButton.accessibilityLabel = NSLocalizedString("Brave Panel", comment: "Button to show the brave panel")
         braveButton.tintColor = BraveUX.ActionButtonTintColor
 
@@ -124,7 +124,7 @@ class BraveURLBarView : URLBarView {
         theme = Theme()
         theme.backgroundColor = BraveUX.LocationBarEditModeBackgroundColor_Private
         theme.textColor = BraveUX.LocationBarEditModeTextColor_Private
-        theme.buttonTintColor = UIColor.whiteColor()    
+        theme.buttonTintColor = UIColor.white    
         ToolbarTextField.Themes[Theme.PrivateMode] = theme
 
         theme = Theme()
@@ -140,7 +140,7 @@ class BraveURLBarView : URLBarView {
         tabsBarController.view.alpha = 0.0
         addSubview(tabsBarController.view)
         getApp().browserViewController.addChildViewController(tabsBarController)
-        tabsBarController.didMoveToParentViewController(getApp().browserViewController)
+        tabsBarController.didMove(toParentViewController: getApp().browserViewController)
     }
 
     override func updateTabsBarShowing() {
@@ -167,37 +167,37 @@ class BraveURLBarView : URLBarView {
             BraveURLBarView.CurrentHeight = TabsBarHeight + UIConstants.ToolbarHeight
             updateOffsets()
         } else if isShowing && !shouldShow  {
-            UIView.animateWithDuration(0.1, animations: {
+            UIView.animate(withDuration: 0.1, animations: {
                 self.tabsBarController.view.alpha = 0
                 }, completion: { _ in
                     BraveURLBarView.CurrentHeight = UIConstants.ToolbarHeight
-                    UIView.animateWithDuration(0.2) {
+                    UIView.animate(withDuration: 0.2, animations: {
                         updateOffsets()
-                        bvc.view.layoutIfNeeded()
-                    }
+                        bvc?.view.layoutIfNeeded()
+                    }) 
             })
         }
     }
 
-    override func applyTheme(themeName: String) {
+    override func applyTheme(_ themeName: String) {
         super.applyTheme(themeName)
     }
 
-    override func updateAlphaForSubviews(alpha: CGFloat) {
+    override func updateAlphaForSubviews(_ alpha: CGFloat) {
         super.updateAlphaForSubviews(alpha)
         self.superview?.alpha = alpha
     }
 
     @objc func onClickLeftSlideOut() {
-        leftSidePanelButton.selected = !leftSidePanelButton.selected
-        NSNotificationCenter.defaultCenter().postNotificationName(kNotificationLeftSlideOutClicked, object: leftSidePanelButton)
+        leftSidePanelButton.isSelected = !leftSidePanelButton.isSelected
+        NotificationCenter.default.post(name: Notification.Name(rawValue: kNotificationLeftSlideOutClicked), object: leftSidePanelButton)
     }
 
     @objc func onClickBraveButton() {
-        NSNotificationCenter.defaultCenter().postNotificationName(kNotificationBraveButtonClicked, object: braveButton)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: kNotificationBraveButtonClicked), object: braveButton)
     }
 
-    override func updateTabCount(count: Int, animated: Bool = true) {
+    override func updateTabCount(_ count: Int, animated: Bool = true) {
         super.updateTabCount(count, animated: toolbarIsShowing)
         BraveBrowserBottomToolbar.updateTabCountDuplicatedButton(count, animated: animated)
     }
@@ -229,23 +229,23 @@ class BraveURLBarView : URLBarView {
         super.updateViewsForOverlayModeAndToolbarChanges()
 
         if !self.toolbarIsShowing {
-            self.tabsButton.hidden = true
+            self.tabsButton.isHidden = true
         } else {
-            self.tabsButton.hidden = false
+            self.tabsButton.isHidden = false
         }
 
-        bookmarkButton.hidden = true
+        bookmarkButton.isHidden = true
     }
 
     override func prepareOverlayAnimation() {
         super.prepareOverlayAnimation()
-        bookmarkButton.hidden = true
-        braveButton.hidden = true
+        bookmarkButton.isHidden = true
+        braveButton.isHidden = true
     }
 
-    override func transitionToOverlay(didCancel: Bool = false) {
+    override func transitionToOverlay(_ didCancel: Bool = false) {
         super.transitionToOverlay(didCancel)
-        bookmarkButton.hidden = true
+        bookmarkButton.isHidden = true
         locationView.alpha = 0.0
 
         locationView.superview?.backgroundColor = locationTextField?.backgroundColor
@@ -261,15 +261,15 @@ class BraveURLBarView : URLBarView {
 
         // The orange brave button sliding in looks odd, lets fade it in in-place
         braveButton.alpha = 0
-        braveButton.hidden = false
-        UIView.animateWithDuration(0.3, animations: { self.braveButton.alpha = 1.0 })
+        braveButton.isHidden = false
+        UIView.animate(withDuration: 0.3, animations: { self.braveButton.alpha = 1.0 })
     }
 
     override func updateConstraints() {
         super.updateConstraints()
 
         if tabsBarController.view.superview != nil {
-            bringSubviewToFront(tabsBarController.view)
+            bringSubview(toFront: tabsBarController.view)
             tabsBarController.view.snp_makeConstraints { (make) in
                 make.bottom.left.right.equalTo(self)
                 make.height.equalTo(TabsBarHeight)
@@ -282,8 +282,8 @@ class BraveURLBarView : URLBarView {
             make.top.bottom.equalTo(leftSidePanelButton).inset(7)
         }
 
-        curveShape.hidden = true
-        bookmarkButton.hidden = true
+        curveShape.isHidden = true
+        bookmarkButton.isHidden = true
         bookmarkButton.snp_removeConstraints()
         curveShape.snp_removeConstraints()
 
@@ -335,7 +335,7 @@ class BraveURLBarView : URLBarView {
             }
         }
 
-        bringSubviewToFront(stopReloadButton)
+        bringSubview(toFront: stopReloadButton)
     }
 
     override func setupConstraints() {
@@ -385,16 +385,16 @@ class BraveURLBarView : URLBarView {
             make.size.equalTo(UIConstants.ToolbarHeight)
         }
 
-        bringSubviewToFront(stopReloadButton)
+        bringSubview(toFront: stopReloadButton)
     }
 
-    private var progressIsCompleting = false
-    private var updateIsScheduled = false
-    override func updateProgressBar(progress: Float, dueToTabChange: Bool = false) {
+    fileprivate var progressIsCompleting = false
+    fileprivate var updateIsScheduled = false
+    override func updateProgressBar(_ progress: Float, dueToTabChange: Bool = false) {
         struct staticProgress { static var val = Float(0) }
         let minProgress = locationView.frame.width / 3.0
 
-        func setWidth(width: CGFloat) {
+        func setWidth(_ width: CGFloat) {
             var frame = locationView.braveProgressView.frame
             frame.size.width = width
             locationView.braveProgressView.frame = frame
@@ -414,16 +414,16 @@ class BraveURLBarView : URLBarView {
         func performUpdate() {
             let progress = staticProgress.val
 
-            if progress == 1.0 || !(BraveApp.getCurrentWebView()?.loading ?? false) {
+            if progress == 1.0 || !(BraveApp.getCurrentWebView()?.isLoading ?? false) {
                 if progressIsCompleting {
                     return
                 }
                 progressIsCompleting = true
 
-                UIView.animateWithDuration(0.5, animations: {
+                UIView.animate(withDuration: 0.5, animations: {
                     setWidth(self.locationView.frame.width)
                     }, completion: { _ in
-                        UIView.animateWithDuration(0.5, animations: {
+                        UIView.animate(withDuration: 0.5, animations: {
                             self.locationView.braveProgressView.alpha = 0.0
                             }, completion: { _ in
                                 self.progressIsCompleting = false
@@ -436,7 +436,7 @@ class BraveURLBarView : URLBarView {
                 let w = minProgress + CGFloat(progress) * (self.locationView.frame.width - minProgress)
 
                 if w > locationView.braveProgressView.frame.size.width {
-                    UIView.animateWithDuration(0.5, animations: {
+                    UIView.animate(withDuration: 0.5, animations: {
                         setWidth(w)
                         }, completion: { _ in
                             
@@ -459,38 +459,38 @@ class BraveURLBarView : URLBarView {
 
     }
 
-    override func updateBookmarkStatus(isBookmarked: Bool) {
+    override func updateBookmarkStatus(_ isBookmarked: Bool) {
         getApp().braveTopViewController.updateBookmarkStatus(isBookmarked)
         leftSidePanelButton.setStarImageBookmarked(isBookmarked)
     }
 
-    func setBraveButtonState(shieldsUp shieldsUp: Bool, animated: Bool) {
+    func setBraveButtonState(shieldsUp: Bool, animated: Bool) {
         let selected = !shieldsUp
-        if braveButton.selected == selected {
+        if braveButton.isSelected == selected {
             return
         }
         
-        braveButton.selected = selected
+        braveButton.isSelected = selected
 
         if !animated {
             return
         }
 
-        let v = InsetLabel(frame: CGRectMake(0, 0, locationContainer.frame.width, locationContainer.frame.height))
+        let v = InsetLabel(frame: CGRect(x: 0, y: 0, width: locationContainer.frame.width, height: locationContainer.frame.height))
         v.rightInset = CGFloat(40)
-        v.text = braveButton.selected ? BraveUX.TitleForBraveProtectionOff : BraveUX.TitleForBraveProtectionOn
-        if var range = v.text!.rangeOfString(" ", options:NSStringCompareOptions.BackwardsSearch) {
-            range.endIndex = v.text!.characters.endIndex
+        v.text = braveButton.isSelected ? BraveUX.TitleForBraveProtectionOff : BraveUX.TitleForBraveProtectionOn
+        if var range = v.text!.range(of: " ", options:NSString.CompareOptions.backwards) {
+            range.upperBound = v.text!.characters.endIndex
             v.boldRange(range)
         }
-        v.backgroundColor = braveButton.selected ? UIColor(white: 0.6, alpha: 1.0) : BraveUX.BraveButtonMessageInUrlBarColor
-        v.textAlignment = .Right
+        v.backgroundColor = braveButton.isSelected ? UIColor(white: 0.6, alpha: 1.0) : BraveUX.BraveButtonMessageInUrlBarColor
+        v.textAlignment = .right
         locationContainer.addSubview(v)
         v.alpha = 0.0
         self.stopReloadButton.alpha = 0
-        UIView.animateWithDuration(0.25, animations: { v.alpha = 1.0 }, completion: {
+        UIView.animate(withDuration: 0.25, animations: { v.alpha = 1.0 }, completion: {
             finished in
-            UIView.animateWithDuration(BraveUX.BraveButtonMessageInUrlBarFadeTime, delay: BraveUX.BraveButtonMessageInUrlBarShowTime, options: [], animations: {
+            UIView.animate(withDuration: BraveUX.BraveButtonMessageInUrlBarFadeTime, delay: BraveUX.BraveButtonMessageInUrlBarShowTime, options: [], animations: {
                 v.alpha = 0
                 self.stopReloadButton.alpha = 1.0
                 }, completion: {

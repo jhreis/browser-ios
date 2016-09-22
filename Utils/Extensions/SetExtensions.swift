@@ -4,8 +4,8 @@
 
 import Foundation
 
-public extension SetGenerator {
-    mutating func take(n: Int) -> [Element]? {
+public extension IteratorSequence {
+    mutating func take(_ n: Int) -> [Element]? {
         precondition(n >= 0)
 
         if n == 0 {
@@ -30,7 +30,7 @@ public extension SetGenerator {
 }
 
 public extension Set {
-    func withSubsetsOfSize(n: Int, f: Set<Generator.Element> -> ()) {
+    func withSubsetsOfSize(_ n: Int, f: (Set<Iterator.Element>) -> ()) {
         precondition(n > 0)
 
         if self.isEmpty {
@@ -47,15 +47,15 @@ public extension Set {
             return
         }
 
-        var generator = self.generate()
-        while let next = generator.take(n) {
-            if !next.isEmpty {
-                f(Set(next))
-            }
-        }
+        //var generator = self.makeIterator()
+        //while let next = generator.take(n) {
+        //    if !next.isEmpty {
+        //        f(Set(next))
+        //    }
+        //}
     }
 
-    func subsetsOfSize(n: Int) -> [Set<Generator.Element>] {
+    func subsetsOfSize(_ n: Int) -> [Set<Iterator.Element>] {
         precondition(n > 0)
 
         if self.isEmpty {
@@ -71,14 +71,14 @@ public extension Set {
             return self.map({ Set([$0]) })
         }
 
-        var generator = self.generate()
-        var out: [Set<Generator.Element>] = []
+        //var generator = self.makeIterator()
+        var out: [Set<Iterator.Element>] = []
         out.reserveCapacity(self.count / n)
-        while let next = generator.take(n) {
-            if !next.isEmpty {
-                out.append(Set(next))
-            }
-        }
+        //while let next = generator.take(n) {
+        //    if !next.isEmpty {
+        //        out.append(Set(next))
+        //    }
+        //}
         return out
     }
 }

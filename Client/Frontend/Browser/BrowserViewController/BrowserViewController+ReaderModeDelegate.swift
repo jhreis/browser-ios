@@ -4,7 +4,7 @@ import Shared
 private let log = Logger.browserLogger
 
 extension BrowserViewController: ReaderModeStyleViewControllerDelegate {
-    func readerModeStyleViewController(readerModeStyleViewController: ReaderModeStyleViewController, didConfigureStyle style: ReaderModeStyle) {
+    func readerModeStyleViewController(_ readerModeStyleViewController: ReaderModeStyleViewController, didConfigureStyle style: ReaderModeStyle) {
         // Persist the new style to the profile
         let encodedStyle: [String:AnyObject] = style.encode()
         profile.prefs.setObject(encodedStyle, forKey: ReaderModeProfileKeyStyle)
@@ -24,13 +24,13 @@ extension BrowserViewController: ReaderModeStyleViewControllerDelegate {
 extension BrowserViewController {
     func updateReaderModeBar() {
         if let readerModeBar = readerModeBar {
-            if let tab = self.tabManager.selectedTab where tab.isPrivate {
+            if let tab = self.tabManager.selectedTab , tab.isPrivate {
                 readerModeBar.applyTheme(Theme.PrivateMode)
             } else {
                 readerModeBar.applyTheme(Theme.NormalMode)
             }
-            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, result = profile.readingList?.getRecordWithURL(url) {
-                if let successValue = result.successValue, record = successValue {
+            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, let result = profile.readingList?.getRecordWithURL(url) {
+                if let successValue = result.successValue, let record = successValue {
                     readerModeBar.unread = record.unread
                     readerModeBar.added = true
                 } else {
@@ -44,9 +44,9 @@ extension BrowserViewController {
         }
     }
 
-    func showReaderModeBar(animated animated: Bool) {
+    func showReaderModeBar(animated: Bool) {
         if self.readerModeBar == nil {
-            let readerModeBar = ReaderModeBarView(frame: CGRectZero)
+            let readerModeBar = ReaderModeBarView(frame: CGRect.zero)
             readerModeBar.delegate = self
             view.insertSubview(readerModeBar, belowSubview: header)
             self.readerModeBar = readerModeBar
@@ -57,7 +57,7 @@ extension BrowserViewController {
         self.updateViewConstraints()
     }
 
-    func hideReaderModeBar(animated animated: Bool) {
+    func hideReaderModeBar(animated: Bool) {
         if let readerModeBar = self.readerModeBar {
             readerModeBar.removeFromSuperview()
             self.readerModeBar = nil
@@ -71,7 +71,7 @@ extension BrowserViewController {
     /// of the current page is there. And if so, we go there.
 
     func enableReaderMode() {
-        guard let tab = tabManager.selectedTab, webView = tab.webView else { return }
+        guard let tab = tabManager.selectedTab, let webView = tab.webView else { return }
 
         let backList = webView.backForwardList.backList
         let forwardList = webView.backForwardList.forwardList
@@ -94,7 +94,7 @@ extension BrowserViewController {
                         // this is not really correct, the original code is ignoring the navigation
                         webView.loadRequest(NSURLRequest(URL: readerModeURL))
                     #else
-                        if let nav = webView.loadRequest(NSURLRequest(URL: readerModeURL)) {
+                        if let nav = webView.loadRequest(URLRequest(url: readerModeURL)) {
                             self.ignoreNavigationInTab(tab, navigation: nav)
                         }
                     #endif
@@ -125,7 +125,7 @@ extension BrowserViewController {
                             // this is not really correct, the original code is ignoring the navigation
                             webView.loadRequest(NSURLRequest(URL: originalURL))
                         #else
-                            if let nav = webView.loadRequest(NSURLRequest(URL: originalURL)) {
+                            if let nav = webView.loadRequest(URLRequest(url: originalURL)) {
                                 self.ignoreNavigationInTab(tab, navigation: nav)
                             }
                         #endif
@@ -135,7 +135,7 @@ extension BrowserViewController {
         }
     }
 
-    func SELDynamicFontChanged(notification: NSNotification) {
+    func SELDynamicFontChanged(_ notification: Notification) {
         guard notification.name == NotificationDynamicFontChanged else { return }
 
         var readerModeStyle = DefaultReaderModeStyle
@@ -150,10 +150,10 @@ extension BrowserViewController {
 }
 
 extension BrowserViewController: ReaderModeBarViewDelegate {
-    func readerModeBar(readerModeBar: ReaderModeBarView, didSelectButton buttonType: ReaderModeBarButtonType) {
+    func readerModeBar(_ readerModeBar: ReaderModeBarView, didSelectButton buttonType: ReaderModeBarButtonType) {
         switch buttonType {
-        case .Settings:
-            if let readerMode = tabManager.selectedTab?.getHelper(ReaderMode.self) where readerMode.state == ReaderModeState.Active {
+        case .settings:
+            if let readerMode = tabManager.selectedTab?.getHelper(ReaderMode.self) , readerMode.state == ReaderModeState.Active {
                 var readerModeStyle = DefaultReaderModeStyle
                 if let dict = profile.prefs.dictionaryForKey(ReaderModeProfileKeyStyle) {
                     if let style = ReaderModeStyle(dict: dict) {
@@ -164,15 +164,15 @@ extension BrowserViewController: ReaderModeBarViewDelegate {
                 let readerModeStyleViewController = ReaderModeStyleViewController()
                 readerModeStyleViewController.delegate = self
                 readerModeStyleViewController.readerModeStyle = readerModeStyle
-                readerModeStyleViewController.modalPresentationStyle = UIModalPresentationStyle.Popover
+                readerModeStyleViewController.modalPresentationStyle = UIModalPresentationStyle.popover
 
                 let setupPopover = { [unowned self] in
                     if let popoverPresentationController = readerModeStyleViewController.popoverPresentationController {
-                        popoverPresentationController.backgroundColor = UIColor.whiteColor()
+                        popoverPresentationController.backgroundColor = UIColor.white
                         popoverPresentationController.delegate = self
                         popoverPresentationController.sourceView = readerModeBar
                         popoverPresentationController.sourceRect = CGRect(x: readerModeBar.frame.width/2, y: UIConstants.ToolbarHeight, width: 1, height: 1)
-                        popoverPresentationController.permittedArrowDirections = UIPopoverArrowDirection.Up
+                        popoverPresentationController.permittedArrowDirections = UIPopoverArrowDirection.up
                     }
                 }
 
@@ -183,28 +183,28 @@ extension BrowserViewController: ReaderModeBarViewDelegate {
                     updateDisplayedPopoverProperties = setupPopover
                 }
 
-                self.presentViewController(readerModeStyleViewController, animated: true, completion: nil)
+                self.present(readerModeStyleViewController, animated: true, completion: nil)
             }
 
-        case .MarkAsRead:
-            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, result = profile.readingList?.getRecordWithURL(url) {
-                if let successValue = result.successValue, record = successValue {
+        case .markAsRead:
+            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, let result = profile.readingList?.getRecordWithURL(url) {
+                if let successValue = result.successValue, let record = successValue {
                     profile.readingList?.updateRecord(record, unread: false) // TODO Check result, can this fail?
                     readerModeBar.unread = false
                 }
             }
 
-        case .MarkAsUnread:
-            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, result = profile.readingList?.getRecordWithURL(url) {
-                if let successValue = result.successValue, record = successValue {
+        case .markAsUnread:
+            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, let result = profile.readingList?.getRecordWithURL(url) {
+                if let successValue = result.successValue, let record = successValue {
                     profile.readingList?.updateRecord(record, unread: true) // TODO Check result, can this fail?
                     readerModeBar.unread = true
                 }
             }
 
-        case .AddToReadingList:
+        case .addToReadingList:
             if let tab = tabManager.selectedTab,
-                let url = tab.url where ReaderModeUtils.isReaderModeURL(url) {
+                let url = tab.url , ReaderModeUtils.isReaderModeURL(url) {
                 if let url = ReaderModeUtils.decodeURL(url) {
                     profile.readingList?.createRecordWithURL(url.absoluteString, title: tab.title ?? "", addedBy: UIDevice.currentDevice().name) // TODO Check result, can this fail?
                     readerModeBar.added = true
@@ -212,9 +212,9 @@ extension BrowserViewController: ReaderModeBarViewDelegate {
                 }
             }
 
-        case .RemoveFromReadingList:
-            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, result = profile.readingList?.getRecordWithURL(url) {
-                if let successValue = result.successValue, record = successValue {
+        case .removeFromReadingList:
+            if let url = self.tabManager.selectedTab?.displayURL?.absoluteString, let result = profile.readingList?.getRecordWithURL(url) {
+                if let successValue = result.successValue, let record = successValue {
                     profile.readingList?.deleteRecord(record) // TODO Check result, can this fail?
                     readerModeBar.added = false
                     readerModeBar.unread = false

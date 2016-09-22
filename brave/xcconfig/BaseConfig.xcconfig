@@ -4,7 +4,6 @@
 
 #include "./build-id.xcconfig"
 #include "./.bundle-id.xcconfig"
-#include "./.local-def.xcconfig"
 
 HEADER_SEARCH_PATHS = ./brave/ThirdParty/leveldb/include ./brave/ThirdParty/leveldb
 

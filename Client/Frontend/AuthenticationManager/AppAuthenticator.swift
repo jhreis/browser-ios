@@ -9,22 +9,22 @@ import LocalAuthentication
 import Storage
 
 class AppAuthenticator {
-    static func presentAuthenticationUsingInfo(authenticationInfo: AuthenticationKeychainInfo, touchIDReason: String, success: (() -> Void)?, fallback: (() -> Void)?) {
+    static func presentAuthenticationUsingInfo(_ authenticationInfo: AuthenticationKeychainInfo, touchIDReason: String, success: (() -> Void)?, fallback: (() -> Void)?) {
         if authenticationInfo.useTouchID {
             let localAuthContext = LAContext()
             localAuthContext.localizedFallbackTitle = AuthenticationStrings.enterPasscode
-            localAuthContext.evaluatePolicy(.DeviceOwnerAuthenticationWithBiometrics, localizedReason: touchIDReason) { didSucceed, error in
+            localAuthContext.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: touchIDReason) { didSucceed, error in
                 if didSucceed {
                     // Update our authentication info's last validation timestamp so we don't ask again based
                     // on the set required interval
                     authenticationInfo.recordValidation()
                     KeychainWrapper.setAuthenticationInfo(authenticationInfo)
 
-                    dispatch_async(dispatch_get_main_queue()) {
+                    DispatchQueue.main.async {
                         success?()
                     }
-                } else if let authError = error where authError.code == LAError.UserFallback.rawValue {
-                    dispatch_async(dispatch_get_main_queue()) {
+                } else if let authError = error , authError.code == LAError.Code.userFallback.rawValue {
+                    DispatchQueue.main.async {
                         fallback?()
                     }
                 }
@@ -34,11 +34,11 @@ class AppAuthenticator {
         }
     }
 
-    static func presentPasscodeAuthentication(presentingNavController: UINavigationController?, delegate: PasscodeEntryDelegate) {
+    static func presentPasscodeAuthentication(_ presentingNavController: UINavigationController?, delegate: PasscodeEntryDelegate) {
         let passcodeVC = PasscodeEntryViewController()
         passcodeVC.delegate = delegate
         let navController = UINavigationController(rootViewController: passcodeVC)
-        navController.modalPresentationStyle = .FormSheet
-        presentingNavController?.presentViewController(navController, animated: true, completion: nil)
+        navController.modalPresentationStyle = .formSheet
+        presentingNavController?.present(navController, animated: true, completion: nil)
     }
 }

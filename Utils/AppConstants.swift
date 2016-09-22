@@ -5,11 +5,11 @@
 import UIKit
 
 public enum AppBuildChannel {
-    case Developer
-    case Aurora
-    case Fennec
-    case Release
-    case Beta
+    case developer
+    case aurora
+    case fennec
+    case release
+    case beta
 }
 
 public struct AppConstants {
@@ -17,7 +17,7 @@ public struct AppConstants {
     public static let IsRunningTest = NSClassFromString("XCTestCase") != nil
 
     // True if this process is executed as part of a Fastlane Snapshot test
-    public static let IsRunningFastlaneSnapshot = NSProcessInfo.processInfo().arguments.contains("FASTLANE_SNAPSHOT")
+    public static let IsRunningFastlaneSnapshot = ProcessInfo.processInfo.arguments.contains("FASTLANE_SNAPSHOT")
 
     /// Build Channel.
     public static let BuildChannel: AppBuildChannel = {
@@ -30,7 +30,7 @@ public struct AppConstants {
 #elseif MOZ_CHANNEL_BETA
     return AppBuildChannel.Beta
 #else
-    return AppBuildChannel.Developer
+    return AppBuildChannel.developer
 #endif
     }()
 

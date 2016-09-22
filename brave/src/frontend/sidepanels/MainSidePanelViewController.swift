@@ -6,7 +6,7 @@ import SnapKit
 class MainSidePanelViewController : SidePanelBaseViewController {
 
     let bookmarksPanel = BookmarksPanel()
-    private var bookmarksNavController:UINavigationController!
+    fileprivate var bookmarksNavController:UINavigationController!
     
     let history = HistoryPanel()
 
@@ -30,8 +30,8 @@ class MainSidePanelViewController : SidePanelBaseViewController {
         super.setupUIElements()
         
         //change the font used in the navigation controller header
-        let font = UIFont.boldSystemFontOfSize(14)
-        UINavigationBar.appearance().titleTextAttributes = [NSFontAttributeName : font, NSForegroundColorAttributeName : UIColor.blackColor()];
+        let font = UIFont.boldSystemFont(ofSize: 14)
+        UINavigationBar.appearance().titleTextAttributes = [NSFontAttributeName : font, NSForegroundColorAttributeName : UIColor.black];
         bookmarksNavController = UINavigationController(rootViewController: bookmarksPanel)
         containerView.addSubview(topButtonsView)
 
@@ -42,27 +42,27 @@ class MainSidePanelViewController : SidePanelBaseViewController {
         topButtonsView.addSubview(settingsButton)
         topButtonsView.addSubview(divider)
 
-        divider.backgroundColor = UIColor.grayColor()
+        divider.backgroundColor = UIColor.gray
 
         triangleView.image = UIImage(named: "triangle-nub")
-        triangleView.contentMode = UIViewContentMode.Center
+        triangleView.contentMode = UIViewContentMode.center
         triangleView.alpha = 0.9
 
-        settingsButton.setImage(UIImage(named: "settings")?.imageWithRenderingMode(.AlwaysTemplate), forState: .Normal)
-        settingsButton.addTarget(self, action: #selector(onClickSettingsButton), forControlEvents: .TouchUpInside)
+        settingsButton.setImage(UIImage(named: "settings")?.withRenderingMode(.alwaysTemplate), for: UIControlState())
+        settingsButton.addTarget(self, action: #selector(onClickSettingsButton), for: .touchUpInside)
         settingsButton.accessibilityLabel = NSLocalizedString("Settings", comment: "Accessibility label for the Settings button.")
 
-        bookmarksButton.setImage(UIImage(named: "bookmarklist"), forState: .Normal)
-        bookmarksButton.addTarget(self, action: #selector(MainSidePanelViewController.showBookmarks), forControlEvents: .TouchUpInside)
+        bookmarksButton.setImage(UIImage(named: "bookmarklist"), for: UIControlState())
+        bookmarksButton.addTarget(self, action: #selector(MainSidePanelViewController.showBookmarks), for: .touchUpInside)
         bookmarksButton.accessibilityLabel = NSLocalizedString("Show Bookmarks", comment: "Button to show the bookmarks list")
 
-        historyButton.setImage(UIImage(named: "history"), forState: .Normal)
-        historyButton.addTarget(self, action: #selector(MainSidePanelViewController.showHistory), forControlEvents: .TouchUpInside)
+        historyButton.setImage(UIImage(named: "history"), for: UIControlState())
+        historyButton.addTarget(self, action: #selector(MainSidePanelViewController.showHistory), for: .touchUpInside)
         historyButton.accessibilityLabel = NSLocalizedString("Show History", comment: "Button to show the history list")
 
-        addBookmarkButton.addTarget(self, action: #selector(onClickBookmarksButton), forControlEvents: .TouchUpInside)
-        addBookmarkButton.setImage(UIImage(named: "bookmark"), forState: .Normal)
-        addBookmarkButton.setImage(UIImage(named: "bookmarkMarked"), forState: .Selected)
+        addBookmarkButton.addTarget(self, action: #selector(onClickBookmarksButton), for: .touchUpInside)
+        addBookmarkButton.setImage(UIImage(named: "bookmark"), for: UIControlState())
+        addBookmarkButton.setImage(UIImage(named: "bookmarkMarked"), for: .selected)
         addBookmarkButton.accessibilityLabel = NSLocalizedString("Add Bookmark", comment: "Button to add a bookmark")
 
         settingsButton.tintColor = BraveUX.ActionButtonTintColor
@@ -75,15 +75,15 @@ class MainSidePanelViewController : SidePanelBaseViewController {
         
         showBookmarks()
 
-        bookmarksNavController.view.hidden = false
+        bookmarksNavController.view.isHidden = false
 
-        containerView.bringSubviewToFront(topButtonsView)
+        containerView.bringSubview(toFront: topButtonsView)
 
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(historyItemAdded), name: kNotificationSiteAddedToHistory, object: nil)
+        NotificationCenter.defaultCenter().addObserver(self, selector: #selector(historyItemAdded), name: kNotificationSiteAddedToHistory, object: nil)
     }
 
     @objc func historyItemAdded() {
-        if self.view.hidden {
+        if self.view.isHidden {
             return
         }
         postAsyncToMain {
@@ -92,7 +92,7 @@ class MainSidePanelViewController : SidePanelBaseViewController {
     }
     
     func willHide() {
-        if self.bookmarksPanel.currentBookmarksPanel().tableView.editing {
+        if self.bookmarksPanel.currentBookmarksPanel().tableView.isEditing {
             self.bookmarksPanel.currentBookmarksPanel().disableTableEditingMode()
         }
     }
@@ -102,12 +102,12 @@ class MainSidePanelViewController : SidePanelBaseViewController {
             return
         }
 
-        let settingsTableViewController = BraveSettingsView(style: .Grouped)
+        let settingsTableViewController = BraveSettingsView(style: .grouped)
         settingsTableViewController.profile = getApp().profile
 
         let controller = SettingsNavigationController(rootViewController: settingsTableViewController)
-        controller.modalPresentationStyle = UIModalPresentationStyle.FormSheet
-        presentViewController(controller, animated: true, completion: nil)
+        controller.modalPresentationStyle = UIModalPresentationStyle.formSheet
+        present(controller, animated: true, completion: nil)
     }
 
     //For this function to be called there *must* be a selected tab and URL
@@ -123,7 +123,7 @@ class MainSidePanelViewController : SidePanelBaseViewController {
 
         //TODO -- need to separate the knowledge of whether current site is bookmarked or not from this UI button
         //tracked in https://github.com/brave/browser-ios/issues/375
-        if addBookmarkButton.selected {
+        if addBookmarkButton.isSelected {
             browserViewController?.removeBookmark(url) {
                 self.bookmarksPanel.currentBookmarksPanel().reloadData()
             }
@@ -153,7 +153,7 @@ class MainSidePanelViewController : SidePanelBaseViewController {
             make.height.equalTo(44.0)
         }
 
-        func common(make: ConstraintMaker) {
+        func common(_ make: ConstraintMaker) {
             make.bottom.equalTo(self.topButtonsView)
             make.height.equalTo(UIConstants.ToolbarHeight)
             make.width.equalTo(60)
@@ -206,18 +206,18 @@ class MainSidePanelViewController : SidePanelBaseViewController {
     }
 
     func showBookmarks() {
-        history.view.hidden = true
-        bookmarksNavController.view.hidden = false
+        history.view.isHidden = true
+        bookmarksNavController.view.isHidden = false
         moveTabIndicator(bookmarksButton)
     }
 
     func showHistory() {
-        bookmarksNavController.view.hidden = true
-        history.view.hidden = false
+        bookmarksNavController.view.isHidden = true
+        history.view.isHidden = false
         moveTabIndicator(historyButton)
     }
 
-    func moveTabIndicator(button: UIButton) {
+    func moveTabIndicator(_ button: UIButton) {
         triangleView.snp_remakeConstraints {
             make in
             make.width.equalTo(button)
@@ -227,7 +227,7 @@ class MainSidePanelViewController : SidePanelBaseViewController {
         }
     }
 
-    override func setHomePanelDelegate(delegate: HomePanelDelegate?) {
+    override func setHomePanelDelegate(_ delegate: HomePanelDelegate?) {
         bookmarksPanel.profile = getApp().profile
         history.profile = getApp().profile
         bookmarksPanel.homePanelDelegate = delegate
@@ -240,16 +240,16 @@ class MainSidePanelViewController : SidePanelBaseViewController {
     }
 
     
-    func updateBookmarkStatus(isBookmarked: Bool, url: NSURL?) {
+    func updateBookmarkStatus(_ isBookmarked: Bool, url: URL?) {
         //URL will be passed as nil by updateBookmarkStatus from BraveTopViewController
         if url == nil {
             //disable button for homescreen/empty url
-            addBookmarkButton.selected = false
-            addBookmarkButton.enabled = false
+            addBookmarkButton.isSelected = false
+            addBookmarkButton.isEnabled = false
         }
         else {
-            addBookmarkButton.enabled = true
-            addBookmarkButton.selected = isBookmarked
+            addBookmarkButton.isEnabled = true
+            addBookmarkButton.isSelected = isBookmarked
         }
     }
 }

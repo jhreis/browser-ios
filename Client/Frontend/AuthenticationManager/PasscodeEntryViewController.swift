@@ -15,7 +15,7 @@ import SwiftKeychainWrapper
 /// Presented to the to user when asking for their passcode to validate entry into a part of the app.
 class PasscodeEntryViewController: BasePasscodeViewController {
     weak var delegate: PasscodeEntryDelegate?
-    private let passcodePane = PasscodePane()
+    fileprivate let passcodePane = PasscodePane()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,28 +27,28 @@ class PasscodeEntryViewController: BasePasscodeViewController {
         }
     }
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         passcodePane.codeInputView.delegate = self
 
         // Don't show the keyboard or allow typing if we're locked out. Also display the error.
         if authenticationInfo?.isLocked() ?? false {
             displayLockoutError()
-            passcodePane.codeInputView.userInteractionEnabled = false
+            passcodePane.codeInputView.isUserInteractionEnabled = false
         } else {
             passcodePane.codeInputView.becomeFirstResponder()
         }
     }
 
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.view.endEditing(true)
     }
 }
 
 extension PasscodeEntryViewController: PasscodeInputViewDelegate {
-    func passcodeInputView(inputView: PasscodeInputView, didFinishEnteringCode code: String) {
-        if let passcode = authenticationInfo?.passcode where passcode == code {
+    func passcodeInputView(_ inputView: PasscodeInputView, didFinishEnteringCode code: String) {
+        if let passcode = authenticationInfo?.passcode , passcode == code {
             authenticationInfo?.recordValidation()
             KeychainWrapper.setAuthenticationInfo(authenticationInfo)
             delegate?.passcodeValidationDidSucceed()

@@ -21,7 +21,7 @@ extension BrowserViewController {
     }
 
     func findOnPage(){
-        if let tab = tabManager.selectedTab where homePanelController == nil {
+        if let tab = tabManager.selectedTab , homePanelController == nil {
             browser(tab, didSelectFindInPageForSelection: "")
         }
     }
@@ -54,15 +54,15 @@ extension BrowserViewController {
         }
     }
 
-    private func nextOrPrevTabShortcut(isNext isNext: Bool) {
+    fileprivate func nextOrPrevTabShortcut(isNext: Bool) {
         guard let tab = tabManager.selectedTab else { return }
         let step = isNext ? 1 : -1
         let tabList: [Browser] = tabManager.tabs.displayedTabsForCurrentPrivateMode
-        func wrappingMod(val:Int, mod:Int) -> Int {
+        func wrappingMod(_ val:Int, mod:Int) -> Int {
             return ((val % mod) + mod) % mod
         }
         assert(wrappingMod(-1, mod: 10) == 9)
-        let index = wrappingMod((tabList.indexOf(tab)! + step), mod: tabList.count)
+        let index = wrappingMod((tabList.index(of: tab)! + step), mod: tabList.count)
         tabManager.selectTab(tabList[index])
     }
 
@@ -102,15 +102,15 @@ extension BrowserViewController {
         } else {
             // Fallback on earlier versions
             return  [
-                UIKeyCommand(input: "r", modifierFlags: .Command, action: #selector(BrowserViewController.reloadTab)),
-                UIKeyCommand(input: "[", modifierFlags: .Command, action: #selector(BrowserViewController.goBack)),
-                UIKeyCommand(input: "f", modifierFlags: .Command, action: #selector(BrowserViewController.findOnPage)),
-                UIKeyCommand(input: "l", modifierFlags: .Command, action: #selector(BrowserViewController.selectLocationBar)),
-                UIKeyCommand(input: "t", modifierFlags: .Command, action: #selector(BrowserViewController.newTab)),
-                 UIKeyCommand(input: "p", modifierFlags: [.Command, .Shift], action: #selector(BrowserViewController.newPrivateTab)),
-                UIKeyCommand(input: "w", modifierFlags: .Command, action: #selector(BrowserViewController.closeTab)),
-                UIKeyCommand(input: "\t", modifierFlags: .Control, action: #selector(BrowserViewController.nextTab)),
-                UIKeyCommand(input: "\t", modifierFlags: [.Control, .Shift], action: #selector(BrowserViewController.previousTab))
+                UIKeyCommand(input: "r", modifierFlags: .command, action: #selector(BrowserViewController.reloadTab)),
+                UIKeyCommand(input: "[", modifierFlags: .command, action: #selector(BrowserViewController.goBack)),
+                UIKeyCommand(input: "f", modifierFlags: .command, action: #selector(BrowserViewController.findOnPage)),
+                UIKeyCommand(input: "l", modifierFlags: .command, action: #selector(BrowserViewController.selectLocationBar)),
+                UIKeyCommand(input: "t", modifierFlags: .command, action: #selector(BrowserViewController.newTab)),
+                 UIKeyCommand(input: "p", modifierFlags: [.command, .shift], action: #selector(BrowserViewController.newPrivateTab)),
+                UIKeyCommand(input: "w", modifierFlags: .command, action: #selector(BrowserViewController.closeTab)),
+                UIKeyCommand(input: "\t", modifierFlags: .control, action: #selector(BrowserViewController.nextTab)),
+                UIKeyCommand(input: "\t", modifierFlags: [.control, .shift], action: #selector(BrowserViewController.previousTab))
             ]
         }
     }

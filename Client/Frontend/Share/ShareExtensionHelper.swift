@@ -17,15 +17,15 @@ private let log = Logger.browserLogger
         
     }
     
-    func activityViewControllerPlaceholderItem(activityViewController: UIActivityViewController) -> AnyObject {
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
         return self.urlString
     }
     
-    func activityViewController(activityViewController: UIActivityViewController, itemForActivityType activityType: String) -> AnyObject? {
+    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivityType) -> Any? {
         return self.item
     }
     
-    func activityViewController(activityViewController: UIActivityViewController, dataTypeIdentifierForActivityType activityType: String?) -> String {
+    func activityViewController(_ activityViewController: UIActivityViewController, dataTypeIdentifierForActivityType activityType: UIActivityType?) -> String {
         
         return "org.appextension.fill-browser-action"
     }
@@ -33,21 +33,21 @@ private let log = Logger.browserLogger
 
 
 class ShareExtensionHelper: NSObject {
-    private weak var selectedTab: Browser?
+    fileprivate weak var selectedTab: Browser?
 
-    private let selectedURL: NSURL
-    private var onePasswordExtensionItem: NSExtensionItem!
+    fileprivate let selectedURL: URL
+    fileprivate var onePasswordExtensionItem: NSExtensionItem!
     var extItem2:NSExtensionItem!
-    private let activities: [UIActivity]
+    fileprivate let activities: [UIActivity]
     var pageDetails:NSDictionary!
 
-    init(url: NSURL, tab: Browser?, activities: [UIActivity]) {
+    init(url: URL, tab: Browser?, activities: [UIActivity]) {
         self.selectedURL = url
         self.selectedTab = tab
         self.activities = activities
     }
     
-    func setupExtensionItem(completionHandler:dispatch_block_t) {
+    func setupExtensionItem(_ completionHandler:@escaping ()->()) {
 
         let selectedWebView = self.selectedTab?.webView
         
@@ -56,7 +56,7 @@ class ShareExtensionHelper: NSObject {
             return
         }
 
-        OnePasswordExtension.sharedExtension().createExtensionItemForWebView(selectedWebView!, completion: {
+        OnePasswordExtension.shared().createExtensionItem(forWebView: selectedWebView!, completion: {
             [weak self] (extensionItem, error) -> Void in
             if extensionItem == nil {
                 log.error("Failed to create the password manager extension item: \(error).")
@@ -72,12 +72,12 @@ class ShareExtensionHelper: NSObject {
 
     }
 
-    func createActivityViewController(completionHandler: (Bool) -> Void) -> UIActivityViewController? {
+    func createActivityViewController(_ completionHandler: @escaping (Bool) -> Void) -> UIActivityViewController? {
         var activityItems = [AnyObject]()
 
         let printInfo = UIPrintInfo(dictionary: nil)
         printInfo.jobName = selectedTab?.url?.absoluteString ?? selectedURL.absoluteString
-        printInfo.outputType = .General
+        printInfo.outputType = .general
         activityItems.append(printInfo)
 
         if let tab = selectedTab {
@@ -98,7 +98,7 @@ class ShareExtensionHelper: NSObject {
         
         if let url = selectedTab?.webView?.URL {
             if self.onePasswordExtensionItem != nil {
-                let act:URLActivityItemSource = URLActivityItemSource(urlString: url.absoluteString, item: self.onePasswordExtensionItem)
+                let act:URLActivityItemSource = URLActivityItemSource(urlString: url.absoluteString!, item: self.onePasswordExtensionItem)
                 activityItems.append(act)
             }
         }
@@ -110,7 +110,7 @@ class ShareExtensionHelper: NSObject {
         // We would also hide View Later, if possible, but the exclusion list doesn't currently support
         // third-party activity types (rdar://19430419).
         activityViewController.excludedActivityTypes = [
-            UIActivityTypeAddToReadingList,
+            UIActivityType.addToReadingList,
         ]
         
 
@@ -137,13 +137,13 @@ class ShareExtensionHelper: NSObject {
 //                    debugPrint(itemProvider.registeredTypeIdentifiers)
                         let ident = kUTTypePropertyList as String
                         if itemProvider.hasItemConformingToTypeIdentifier(ident) {
-                            itemProvider.loadItemForTypeIdentifier(ident, options: nil) { (dict, error) in
+                            itemProvider.loadItem(forTypeIdentifier: ident, options: nil) { (dict, error) in
                                 if error != nil {
                                     NSLog("Error loading from password extension \(error)")
                                 }
                                 else if dict != nil {
                                     
-                                    OnePasswordExtension.sharedExtension().fillReturnedItems(returnedItems, intoWebView: selectedWebView!, completion: { (success, returnedItemsError) -> Void in
+                                    OnePasswordExtension.shared().fillReturnedItems(returnedItems, intoWebView: selectedWebView!, completion: { (success, returnedItemsError) -> Void in
                                                         if !success {
                                                             log.error("Failed to fill item into webview: \(returnedItemsError).")
                                                         }

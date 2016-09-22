@@ -2,9 +2,29 @@
 
 import Foundation
 import Storage
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 func debugNoteIfNotMainThread() {
-    assert(NSThread.isMainThread(), "Func not for off-main use. This crashes in debug.")
+    assert(Thread.isMainThread, "Func not for off-main use. This crashes in debug.")
 }
 
 class Debug_FuncProfiler {
@@ -18,29 +38,25 @@ class Debug_FuncProfiler {
     }
 }
 
-func postAsyncToBackground(delay:Double = 0, closure:()->()) {
-    postAsyncToQueue(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), delay: delay, closure: closure)
+func postAsyncToBackground(_ delay:Double = 0, closure:@escaping ()->()) {
+    postAsyncToQueue(DispatchQueue.global( priority: DispatchQueue.GlobalQueuePriority.background), delay: delay, closure: closure)
 }
 
-func postAsyncToMain(delay:Double = 0, closure:()->()) {
-    postAsyncToQueue(dispatch_get_main_queue(), delay: delay, closure: closure)
+func postAsyncToMain(_ delay:Double = 0, closure:@escaping ()->()) {
+    postAsyncToQueue(DispatchQueue.main, delay: delay, closure: closure)
 }
 
-func postAsyncToQueue(queue: dispatch_queue_t, delay:Double = 0, closure:()->()) {
+func postAsyncToQueue(_ queue: DispatchQueue, delay:Double = 0, closure:@escaping ()->()) {
     if delay == 0 {
         /*
          * per docs: passing DISPATCH_TIME_NOW as the "when" parameter is supported, but not as
          * optimal as calling dispatch_async() instead.
          */
-        dispatch_async(queue, closure)
+        queue.async(execute: closure)
     }
     else {
-        dispatch_after(
-            dispatch_time(
-                DISPATCH_TIME_NOW,
-                Int64(delay * Double(NSEC_PER_SEC))
-            ),
-            queue, closure)
+        queue.asyncAfter(
+            deadline: DispatchTime.now() + Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC), execute: closure)
     }
 }
 
@@ -53,7 +69,7 @@ class FifoDict {
     let maxItemsPerDict = 50
 
     // the url key is a combination of urls, the main doc url, and the url being checked
-    func addItem(key: String, value: AnyObject?) {
+    func addItem(_ key: String, value: AnyObject?) {
         if fifoArrayOfDicts.count > maxItemsPerDict {
             fifoArrayOfDicts.removeFirst()
         }
@@ -71,10 +87,10 @@ class FifoDict {
         }
     }
 
-    func getItem(key: String) -> AnyObject?? {
+    func getItem(_ key: String) -> AnyObject?? {
         for dict in fifoArrayOfDicts {
             if let item = dict[key] {
-                return item
+                return item as AnyObject??
             }
         }
         return nil
@@ -87,27 +103,27 @@ class InsetLabel: UILabel {
     var topInset = CGFloat(0)
     var bottomInset = CGFloat(0)
 
-    override func drawTextInRect(rect: CGRect) {
-        super.drawTextInRect(UIEdgeInsetsInsetRect(rect, UIEdgeInsets(top: topInset, left: leftInset, bottom: bottomInset, right: rightInset)))
+    override func drawText(in rect: CGRect) {
+        super.drawText(in: UIEdgeInsetsInsetRect(rect, UIEdgeInsets(top: topInset, left: leftInset, bottom: bottomInset, right: rightInset)))
     }
 }
 
 
 extension String {
-    func regexReplacePattern(pattern:String,  with:String) -> String {
+    func regexReplacePattern(_ pattern:String,  with:String) -> String {
         let regex = try! NSRegularExpression(pattern:pattern, options: [])
-        return regex.stringByReplacingMatchesInString(self, options: [], range: NSMakeRange(0, self.characters.count), withTemplate: with)
+        return regex.stringByReplacingMatches(in: self, options: [], range: NSMakeRange(0, self.characters.count), withTemplate: with)
     }
 }
 
-extension NSURL {
+extension URL {
     func hostWithGenericSubdomainPrefixRemoved() -> String? {
         return host != nil ? stripGenericSubdomainPrefixFromUrl(host!) : nil
     }
 }
 
 // Firefox has uses urls of the form  http://localhost:6571/errors/error.html?url=http%3A//news.google.ca/ to populate the browser history, and load+redirect using GCDWebServer
-func stripLocalhostWebServer(url: String) -> String {
+func stripLocalhostWebServer(_ url: String) -> String {
 #if !TEST // TODO fix up the fact lots of code isn't available in the test suite, this is just an additional check, so for testing the rest of the code will work fine
     if !url.startsWith(WebServer.sharedInstance.base) {
         return url
@@ -115,33 +131,33 @@ func stripLocalhostWebServer(url: String) -> String {
 #endif
     // I think the ones prefixed with the following are the only ones of concern. There is also about/sessionrestore urls, not sure if we need to look at those
     let token = "errors/error.html?url="
-    let range = url.rangeOfString(token)
+    let range = url.range(of: token)
     if let range = range {
-        return url.substringFromIndex(range.endIndex)
+        return url.substring(from: range.upperBound)
     } else {
         return url
     }
 }
 
-func stripGenericSubdomainPrefixFromUrl(url: String) -> String {
+func stripGenericSubdomainPrefixFromUrl(_ url: String) -> String {
     return url.regexReplacePattern("^(m\\.|www\\.|mobile\\.)", with:"");
 }
 
-func addSkipBackupAttributeToItemAtURL(url:NSURL) {
-    let fileManager = NSFileManager.defaultManager()
+func addSkipBackupAttributeToItemAtURL(_ url:URL) {
+    let fileManager = FileManager.default
     #if DEBUG
     assert(fileManager.fileExistsAtPath(url.path!))
     #endif
 
     do {
-        try url.setResourceValue(true, forKey: NSURLIsExcludedFromBackupKey)
+        try (url as NSURL).setResourceValue(true, forKey: URLResourceKey.isExcludedFromBackupKey)
     } catch {
         print("Error excluding \(url.lastPathComponent) from backup \(error)")
     }
 }
 
 
-func getBestFavicon(favicons: [Favicon]) -> Favicon? {
+func getBestFavicon(_ favicons: [Favicon]) -> Favicon? {
     if favicons.count < 1 {
         return nil
     }
@@ -155,11 +171,11 @@ func getBestFavicon(favicons: [Favicon]) -> Favicon? {
 
         if icon.type.isPreferredTo(best!.type) || best!.url.endsWith(".svg") {
             best = icon
-        } else if let width = icon.width, widthBest = best!.width where width > 0 && width > widthBest {
+        } else if let width = icon.width, let widthBest = best!.width , width > 0 && width > widthBest {
             best = icon
         } else {
             // the last number in the url is likely a size (...72x72.png), use as a best-guess as to which icon comes next
-            func extractNumberFromUrl(url: String) -> Int? {
+            func extractNumberFromUrl(_ url: String) -> Int? {
                 var end = (url as NSString).lastPathComponent
                 end = end.regexReplacePattern("\\D", with: " ")
                 var parts = end.componentsSeparatedByString(" ")
@@ -171,7 +187,7 @@ func getBestFavicon(favicons: [Favicon]) -> Favicon? {
                 return nil
             }
 
-            if let nextNum = extractNumberFromUrl(icon.url), bestNum = extractNumberFromUrl(best!.url) {
+            if let nextNum = extractNumberFromUrl(icon.url), let bestNum = extractNumberFromUrl(best!.url) {
                 if nextNum > bestNum {
                     best = icon
                 }

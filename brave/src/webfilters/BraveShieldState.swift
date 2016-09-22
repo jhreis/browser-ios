@@ -14,7 +14,7 @@ class BraveShieldTable: GenericTable<BraveShieldTableRow> {
     static let colState = "state_json"
 
     var db: BrowserDB!
-    static func initialize(db: BrowserDB) -> BraveShieldTable? {
+    static func initialize(_ db: BrowserDB) -> BraveShieldTable? {
         let table = BraveShieldTable()
         table.db = db
         if !db.createOrUpdate(table) {
@@ -29,7 +29,7 @@ class BraveShieldTable: GenericTable<BraveShieldTableRow> {
         " \(BraveShieldTable.colDomain) TEXT NOT NULL UNIQUE, " +
         " \(BraveShieldTable.colState) TEXT " }
 
-    override func updateTable(db: SQLiteDBConnection, from: Int) -> Bool {
+    override func updateTable(_ db: SQLiteDBConnection, from: Int) -> Bool {
         let to = self.version
         print("Update table \(self.name) from \(from) to \(to)")
         if from == 0 && to >= 1 {
@@ -57,34 +57,34 @@ class BraveShieldTable: GenericTable<BraveShieldTableRow> {
         return deferMaybe(items)
     }
 
-    func makeArgs(item: BraveShieldTableRow) -> [AnyObject?] {
+    func makeArgs(_ item: BraveShieldTableRow) -> [AnyObject?] {
         var args = [AnyObject?]()
-        args.append(item.shieldState)
-        args.append(item.normalizedDomain)
+        args.append(item.shieldState as AnyObject?)
+        args.append(item.normalizedDomain as AnyObject?)
         return args
     }
 
-    override func getInsertAndArgs(inout item: BraveShieldTableRow) -> (String, [AnyObject?])? {
+    override func getInsertAndArgs(_ item: inout BraveShieldTableRow) -> (String, [AnyObject?])? {
         return ("INSERT INTO \(BraveShieldTable.tableName) (\(BraveShieldTable.colState), \(BraveShieldTable.colDomain)) VALUES (?,?)", makeArgs(item))
     }
 
-    override func getUpdateAndArgs(inout item: BraveShieldTableRow) -> (String, [AnyObject?])? {
+    override func getUpdateAndArgs(_ item: inout BraveShieldTableRow) -> (String, [AnyObject?])? {
         return ("UPDATE \(BraveShieldTable.tableName) SET \(BraveShieldTable.colState) = ? WHERE \(BraveShieldTable.colDomain) = ?", makeArgs(item))
     }
 
-    override func getDeleteAndArgs(inout item: BraveShieldTableRow?) -> (String, [AnyObject?])? {
+    override func getDeleteAndArgs(_ item: inout BraveShieldTableRow?) -> (String, [AnyObject?])? {
         var args = [AnyObject?]()
         if let item = item {
-            args.append(item.normalizedDomain)
+            args.append(item.normalizedDomain as AnyObject?)
             return ("DELETE FROM \(BraveShieldTable.tableName) WHERE \(BraveShieldTable.colDomain) = ?", args)
         }
         return ("DELETE FROM \(BraveShieldTable.tableName)", [])
     }
 
-    override var factory: ((row: SDRow) -> BraveShieldTableRow)? {
+    override var factory: ((_ row: SDRow) -> BraveShieldTableRow)? {
         return { row -> BraveShieldTableRow in
             var item = BraveShieldTableRow()
-            if let domain = row[BraveShieldTable.colDomain] as? String, state = row[BraveShieldTable.colState] as? String {
+            if let domain = row[BraveShieldTable.colDomain] as? String, let state = row[BraveShieldTable.colState] as? String {
                 item.normalizedDomain = domain
                 item.shieldState = state
             }
@@ -92,10 +92,10 @@ class BraveShieldTable: GenericTable<BraveShieldTableRow> {
         }
     }
 
-    override func getQueryAndArgs(options: QueryOptions?) -> (String, [AnyObject?])? {
+    override func getQueryAndArgs(_ options: QueryOptions?) -> (String, [AnyObject?])? {
         var args = [AnyObject?]()
         if let filter: AnyObject = options?.filter {
-            args.append("%\(filter)%")
+            args.append("%\(filter)%" as AnyObject?)
             return ("SELECT \(BraveShieldTable.colState), \(BraveShieldTable.colDomain) FROM \(BraveShieldTable.tableName) WHERE \(BraveShieldTable.colDomain) LIKE ?", args)
         }
         return ("SELECT \(BraveShieldTable.colState), \(BraveShieldTable.colDomain) FROM \(BraveShieldTable.tableName)", args)
@@ -159,7 +159,7 @@ extension BrowserProfile {
         return deferred
     }
 
-    public func setBraveShieldForNormalizedDomain(domain: String, state: (String, Bool?)) {
+    public func setBraveShieldForNormalizedDomain(_ domain: String, state: (String, Bool?)) {
         BraveShieldState.forDomain(domain, setState: state)
 
         if PrivateBrowsing.singleton.isOn {
@@ -175,11 +175,11 @@ extension BrowserProfile {
 
             var t = BraveShieldTableRow()
             t.normalizedDomain = domain
-            if let state = persistentState, jsonString = state.toJsonString() {
+            if let state = persistentState, let jsonString = state.toJsonString() {
                 t.shieldState = jsonString
             }
             var err: NSError?
-            self.db.transaction(synchronous: true, err: &err) { (connection, inout err:NSError?) -> Bool in
+            self.db.transaction(synchronous: true, err: &err) { (connection, err:inout NSError?) -> Bool in
                 if persistentState == nil {
                     braveShieldForDomainTable?.delete(connection, item: t, err: &err)
                     return true
@@ -196,7 +196,7 @@ extension BrowserProfile {
 }
 
 // These override the setting in the prefs
-public class BraveShieldState {
+open class BraveShieldState {
     static let kAllOff = "all_off"
     static let kAdBlockAndTp = "adblock_and_tp"
     //static let kTrackingProtection = "tp" // unused
@@ -209,7 +209,7 @@ public class BraveShieldState {
     typealias DomainKey = String
     static var perNormalizedDomain = [DomainKey: BraveShieldState]()
 
-    static func forDomain(domain: String, setState state:(ShieldKey, Bool?)) {
+    static func forDomain(_ domain: String, setState state:(ShieldKey, Bool?)) {
         var shields = perNormalizedDomain[domain]
         if shields == nil {
             if state.1 == nil {
@@ -222,7 +222,7 @@ public class BraveShieldState {
         perNormalizedDomain[domain] = shields!
     }
 
-    static func getStateForDomain(domain: String) -> BraveShieldState? {
+    static func getStateForDomain(_ domain: String) -> BraveShieldState? {
         return perNormalizedDomain[domain]
     }
 
@@ -240,15 +240,15 @@ public class BraveShieldState {
         return JSON(state).toString()
     }
 
-    func setState(key: ShieldKey, on: Bool?) {
+    func setState(_ key: ShieldKey, on: Bool?) {
         if let on = on {
             state[key] = on
         } else {
-            state.removeValueForKey(key)
+            state.removeValue(forKey: key)
         }
     }
 
-    private var state = [ShieldKey:Bool]()
+    fileprivate var state = [ShieldKey:Bool]()
 
     func isAllOff() -> Bool {
         return state[BraveShieldState.kAllOff] ?? false
@@ -278,7 +278,7 @@ public class BraveShieldState {
         return state[BraveShieldState.kFPProtection] ?? nil
     }
 
-    func setStateFromPerPageShield(pageState: BraveShieldState?) {
+    func setStateFromPerPageShield(_ pageState: BraveShieldState?) {
         setState(BraveShieldState.kNoscript, on: pageState?.isOnScriptBlocking() ?? (BraveApp.getPrefs()?.boolForKey(kPrefKeyNoScriptOn) ?? false))
         setState(BraveShieldState.kAdBlockAndTp, on: pageState?.isOnAdBlockAndTp() ?? AdBlocker.singleton.isNSPrefEnabled)
         setState(BraveShieldState.kSafeBrowsing, on: pageState?.isOnSafeBrowsing() ?? SafeBrowsing.singleton.isNSPrefEnabled)

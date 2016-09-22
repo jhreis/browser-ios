@@ -36,7 +36,7 @@ struct URLBarViewUX {
         theme.borderColor = UIConstants.PrivateModeLocationBorderColor
         theme.activeBorderColor = UIConstants.PrivateModePurple
         theme.tintColor = UIConstants.PrivateModePurple
-        theme.textColor = UIColor.whiteColor()
+        theme.textColor = UIColor.white
         theme.buttonTintColor = UIConstants.PrivateModeActionButtonTintColor
         themes[Theme.PrivateMode] = theme
 
@@ -44,33 +44,33 @@ struct URLBarViewUX {
         theme.borderColor = TextFieldBorderColor
         theme.activeBorderColor = TextFieldActiveBorderColor
         theme.tintColor = ProgressTintColor
-        theme.textColor = UIColor.blackColor()
-        theme.buttonTintColor = UIColor.darkGrayColor()
+        theme.textColor = UIColor.black
+        theme.buttonTintColor = UIColor.darkGray
         themes[Theme.NormalMode] = theme
 
         return themes
     }()
 
-    static func backgroundColorWithAlpha(alpha: CGFloat) -> UIColor {
-        return UIConstants.AppBackgroundColor.colorWithAlphaComponent(alpha)
+    static func backgroundColorWithAlpha(_ alpha: CGFloat) -> UIColor {
+        return UIConstants.AppBackgroundColor.withAlphaComponent(alpha)
     }
 }
 
 protocol URLBarDelegate: class {
-    func urlBarDidPressTabs(urlBar: URLBarView)
-    func urlBarDidPressReaderMode(urlBar: URLBarView)
+    func urlBarDidPressTabs(_ urlBar: URLBarView)
+    func urlBarDidPressReaderMode(_ urlBar: URLBarView)
     /// - returns: whether the long-press was handled by the delegate; i.e. return `false` when the conditions for even starting handling long-press were not satisfied
-    func urlBarDidLongPressReaderMode(urlBar: URLBarView) -> Bool
-    func urlBarDidPressStop(urlBar: URLBarView)
-    func urlBarDidPressReload(urlBar: URLBarView)
-    func urlBarDidEnterOverlayMode(urlBar: URLBarView)
-    func urlBarDidLeaveOverlayMode(urlBar: URLBarView)
-    func urlBarDidLongPressLocation(urlBar: URLBarView)
-    func urlBarLocationAccessibilityActions(urlBar: URLBarView) -> [UIAccessibilityCustomAction]?
-    func urlBarDidPressScrollToTop(urlBar: URLBarView)
-    func urlBar(urlBar: URLBarView, didEnterText text: String)
-    func urlBar(urlBar: URLBarView, didSubmitText text: String)
-    func urlBarDisplayTextForURL(url: NSURL?) -> String?
+    func urlBarDidLongPressReaderMode(_ urlBar: URLBarView) -> Bool
+    func urlBarDidPressStop(_ urlBar: URLBarView)
+    func urlBarDidPressReload(_ urlBar: URLBarView)
+    func urlBarDidEnterOverlayMode(_ urlBar: URLBarView)
+    func urlBarDidLeaveOverlayMode(_ urlBar: URLBarView)
+    func urlBarDidLongPressLocation(_ urlBar: URLBarView)
+    func urlBarLocationAccessibilityActions(_ urlBar: URLBarView) -> [UIAccessibilityCustomAction]?
+    func urlBarDidPressScrollToTop(_ urlBar: URLBarView)
+    func urlBar(_ urlBar: URLBarView, didEnterText text: String)
+    func urlBar(_ urlBar: URLBarView, didSubmitText text: String)
+    func urlBarDisplayTextForURL(_ url: URL?) -> String?
 }
 
 class URLBarView: UIView {
@@ -78,14 +78,14 @@ class URLBarView: UIView {
     dynamic var locationBorderColor: UIColor = URLBarViewUX.TextFieldBorderColor {
         didSet {
             if !inOverlayMode {
-                locationContainer.layer.borderColor = locationBorderColor.CGColor
+                locationContainer.layer.borderColor = locationBorderColor.cgColor
             }
         }
     }
     dynamic var locationActiveBorderColor: UIColor = URLBarViewUX.TextFieldActiveBorderColor {
         didSet {
             if inOverlayMode {
-                locationContainer.layer.borderColor = locationActiveBorderColor.CGColor
+                locationContainer.layer.borderColor = locationActiveBorderColor.cgColor
             }
         }
     }
@@ -100,7 +100,7 @@ class URLBarView: UIView {
         }
     }
 
-    private var currentTheme: String = Theme.NormalMode
+    fileprivate var currentTheme: String = Theme.NormalMode
 
     var toolbarIsShowing = false
 
@@ -127,7 +127,7 @@ class URLBarView: UIView {
         // Enable clipping to apply the rounded edges to subviews.
         locationContainer.clipsToBounds = true
 
-        locationContainer.layer.borderColor = self.locationBorderColor.CGColor
+        locationContainer.layer.borderColor = self.locationBorderColor.cgColor
         locationContainer.layer.cornerRadius = URLBarViewUX.TextFieldCornerRadius
         locationContainer.layer.borderWidth = URLBarViewUX.TextFieldBorderWidth
 
@@ -137,7 +137,7 @@ class URLBarView: UIView {
     lazy var tabsButton: TabsButton = {
         let tabsButton = TabsButton()
         tabsButton.titleLabel.text = "0"
-        tabsButton.addTarget(self, action: #selector(URLBarView.SELdidClickAddTab), forControlEvents: UIControlEvents.TouchUpInside)
+        tabsButton.addTarget(self, action: #selector(URLBarView.SELdidClickAddTab), for: UIControlEvents.touchUpInside)
         tabsButton.accessibilityIdentifier = "URLBarView.tabsButton"
         tabsButton.accessibilityLabel = NSLocalizedString("Show Tabs", comment: "Accessibility Label for the tabs button in the browser toolbar")
         return tabsButton
@@ -145,14 +145,14 @@ class URLBarView: UIView {
 
     lazy var cancelButton: UIButton = {
         let cancelButton = InsetButton()
-        cancelButton.setTitleColor(UIColor.blackColor(), forState: UIControlState.Normal)
+        cancelButton.setTitleColor(UIColor.black, for: UIControlState())
         let cancelTitle = NSLocalizedString("Cancel", comment: "Button label to cancel entering a URL or search query")
-        cancelButton.setTitle(cancelTitle, forState: UIControlState.Normal)
+        cancelButton.setTitle(cancelTitle, for: UIControlState())
         cancelButton.titleLabel?.font = UIConstants.DefaultChromeFont
-        cancelButton.addTarget(self, action: #selector(URLBarView.SELdidClickCancel), forControlEvents: UIControlEvents.TouchUpInside)
+        cancelButton.addTarget(self, action: #selector(URLBarView.SELdidClickCancel), for: UIControlEvents.touchUpInside)
         cancelButton.titleEdgeInsets = UIEdgeInsetsMake(10, 12, 10, 12)
-        cancelButton.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Horizontal)
-        cancelButton.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Horizontal)
+        cancelButton.setContentHuggingPriority(1000, for: UILayoutConstraintAxis.horizontal)
+        cancelButton.setContentCompressionResistancePriority(1000, for: UILayoutConstraintAxis.horizontal)
         cancelButton.alpha = 0
         return cancelButton
     }()
@@ -161,7 +161,7 @@ class URLBarView: UIView {
 
     lazy var scrollToTopButton: UIButton = {
         let button = UIButton()
-        button.addTarget(self, action: #selector(URLBarView.SELtappedScrollToTopArea), forControlEvents: UIControlEvents.TouchUpInside)
+        button.addTarget(self, action: #selector(URLBarView.SELtappedScrollToTopArea), for: UIControlEvents.touchUpInside)
         return button
     }()
 
@@ -180,14 +180,14 @@ class URLBarView: UIView {
     }()
 
     // Used to temporarily store the cloned button so we can respond to layout changes during animation
-    private weak var clonedTabsButton: TabsButton?
+    fileprivate weak var clonedTabsButton: TabsButton?
 
-    private var rightBarConstraint: Constraint?
-    private let defaultRightOffset: CGFloat = URLBarViewUX.URLBarCurveOffset - URLBarViewUX.URLBarCurveBounceBuffer
+    fileprivate var rightBarConstraint: Constraint?
+    fileprivate let defaultRightOffset: CGFloat = URLBarViewUX.URLBarCurveOffset - URLBarViewUX.URLBarCurveBounceBuffer
 
-    var currentURL: NSURL? {
+    var currentURL: URL? {
         get {
-            return locationView.url
+            return locationView.url as URL?
         }
 
         set(newURL) {
@@ -247,16 +247,16 @@ class URLBarView: UIView {
 
         locationTextField.translatesAutoresizingMaskIntoConstraints = false
         locationTextField.autocompleteDelegate = self
-        locationTextField.keyboardType = UIKeyboardType.WebSearch
-        locationTextField.autocorrectionType = UITextAutocorrectionType.No
-        locationTextField.autocapitalizationType = UITextAutocapitalizationType.None
-        locationTextField.returnKeyType = UIReturnKeyType.Go
-        locationTextField.clearButtonMode = UITextFieldViewMode.WhileEditing
+        locationTextField.keyboardType = UIKeyboardType.webSearch
+        locationTextField.autocorrectionType = UITextAutocorrectionType.no
+        locationTextField.autocapitalizationType = UITextAutocapitalizationType.none
+        locationTextField.returnKeyType = UIReturnKeyType.go
+        locationTextField.clearButtonMode = UITextFieldViewMode.whileEditing
         locationTextField.font = UIConstants.DefaultChromeFont
         locationTextField.accessibilityIdentifier = "address"
         locationTextField.accessibilityLabel = NSLocalizedString("Address and Search", comment: "Accessibility label for address and search field, both words (Address, Search) are therefore nouns.")
 
-        locationTextField.attributedPlaceholder = NSAttributedString(string: self.locationView.placeholder.string, attributes: [NSForegroundColorAttributeName: UIColor.grayColor()])
+        locationTextField.attributedPlaceholder = NSAttributedString(string: self.locationView.placeholder.string, attributes: [NSForegroundColorAttributeName: UIColor.gray])
 
         locationContainer.addSubview(locationTextField)
 
@@ -275,7 +275,7 @@ class URLBarView: UIView {
     // Ideally we'd split this implementation in two, one URLBarView with a toolbar and one without
     // However, switching views dynamically at runtime is a difficult. For now, we just use one view
     // that can show in either mode.
-    func setShowToolbar(shouldShow: Bool) {
+    func setShowToolbar(_ shouldShow: Bool) {
         toolbarIsShowing = shouldShow
         setNeedsUpdateConstraints()
         // when we transition from portrait to landscape, calling this here causes
@@ -286,18 +286,18 @@ class URLBarView: UIView {
         updateViewsForOverlayModeAndToolbarChanges()
     }
 
-    func updateAlphaForSubviews(alpha: CGFloat) {
+    func updateAlphaForSubviews(_ alpha: CGFloat) {
         self.tabsButton.alpha = alpha
         self.locationContainer.alpha = alpha
         self.backgroundColor = URLBarViewUX.backgroundColorWithAlpha(1 - alpha)
         self.actionButtons.forEach { $0.alpha = alpha }
     }
 
-    func updateTabCount(count: Int, animated: Bool = true) {
+    func updateTabCount(_ count: Int, animated: Bool = true) {
         URLBarView.updateTabCount(tabsButton, clonedTabsButton: &clonedTabsButton, count: count, animated: animated)
     }
 
-    class func updateTabCount(tabsButton: TabsButton, inout clonedTabsButton: TabsButton?, count: Int, animated: Bool = true) {
+    class func updateTabCount(_ tabsButton: TabsButton, clonedTabsButton: inout TabsButton?, count: Int, animated: Bool = true) {
         let currentCount = tabsButton.titleLabel.text
         // only animate a tab count change if the tab count has actually changed
         if currentCount == count.description {
@@ -338,7 +338,7 @@ class URLBarView: UIView {
         // Instead of changing the anchorPoint of the CALayer, lets alter the rotation matrix math to be
         // a rotation around a non-origin point
         let frame = tabsButton.insideButton.frame
-        let halfTitleHeight = CGRectGetHeight(frame) / 2
+        let halfTitleHeight = frame.height / 2
 
         var newFlipTransform = CATransform3DIdentity
         newFlipTransform = CATransform3DTranslate(newFlipTransform, 0, halfTitleHeight, 0)
@@ -372,26 +372,26 @@ class URLBarView: UIView {
         }
 
         if animated {
-            UIView.animateWithDuration(1.5, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.0, options: UIViewAnimationOptions.CurveEaseInOut, animations: animate, completion: completion)
+            UIView.animate(withDuration: 1.5, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.0, options: UIViewAnimationOptions(), animations: animate, completion: completion)
         } else {
             completion(true)
         }
 
     }
 
-    func updateProgressBar(progress: Float, dueToTabChange: Bool = false) {
+    func updateProgressBar(_ progress: Float, dueToTabChange: Bool = false) {
         return // use Brave override only
     }
 
-    func updateReaderModeState(state: ReaderModeState) {
+    func updateReaderModeState(_ state: ReaderModeState) {
         locationView.readerModeState = state
     }
 
-    func setAutocompleteSuggestion(suggestion: String?) {
+    func setAutocompleteSuggestion(_ suggestion: String?) {
         locationTextField?.setAutocompleteSuggestion(suggestion)
     }
 
-    func enterOverlayMode(locationText: String?, pasted: Bool) {
+    func enterOverlayMode(_ locationText: String?, pasted: Bool) {
         createLocationTextField()
 
         // Show the overlay mode UI, which includes hiding the locationView and replacing it
@@ -409,14 +409,14 @@ class URLBarView: UIView {
             // Clear any existing text, focus the field, then set the actual pasted text.
             // This avoids highlighting all of the text.
             self.locationTextField?.text = ""
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.locationTextField?.becomeFirstResponder()
                 self.locationTextField?.text = locationText
             }
         } else {
             // Copy the current URL to the editable text field, then activate it.
             self.locationTextField?.text = locationText
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.locationTextField?.becomeFirstResponder()
             }
         }
@@ -430,16 +430,16 @@ class URLBarView: UIView {
 
     func prepareOverlayAnimation() {
         // Make sure everything is showing during the transition (we'll hide it afterwards).
-        self.bringSubviewToFront(self.locationContainer)
-        self.cancelButton.hidden = false
-        self.shareButton.hidden = !self.toolbarIsShowing
-        self.bookmarkButton.hidden = !self.toolbarIsShowing
-        self.forwardButton.hidden = !self.toolbarIsShowing
-        self.backButton.hidden = !self.toolbarIsShowing
-        self.stopReloadButton.hidden = false
+        self.bringSubview(toFront: self.locationContainer)
+        self.cancelButton.isHidden = false
+        self.shareButton.isHidden = !self.toolbarIsShowing
+        self.bookmarkButton.isHidden = !self.toolbarIsShowing
+        self.forwardButton.isHidden = !self.toolbarIsShowing
+        self.backButton.isHidden = !self.toolbarIsShowing
+        self.stopReloadButton.isHidden = false
     }
 
-    func transitionToOverlay(didCancel: Bool = false) {
+    func transitionToOverlay(_ didCancel: Bool = false) {
         self.cancelButton.alpha = inOverlayMode ? 1 : 0
         self.shareButton.alpha = inOverlayMode ? 0 : 1
         self.bookmarkButton.alpha = inOverlayMode ? 0 : 1
@@ -448,11 +448,11 @@ class URLBarView: UIView {
         self.stopReloadButton.alpha = inOverlayMode ? 0 : 1
 
         let borderColor = inOverlayMode ? locationActiveBorderColor : locationBorderColor
-        locationContainer.layer.borderColor = borderColor.CGColor
+        locationContainer.layer.borderColor = borderColor.cgColor
 
         if inOverlayMode {
-            self.cancelButton.transform = CGAffineTransformIdentity
-            let tabsButtonTransform = CGAffineTransformMakeTranslation(self.tabsButton.frame.width + URLBarViewUX.URLBarCurveOffset, 0)
+            self.cancelButton.transform = CGAffineTransform.identity
+            let tabsButtonTransform = CGAffineTransform(translationX: self.tabsButton.frame.width + URLBarViewUX.URLBarCurveOffset, y: 0)
             self.tabsButton.transform = tabsButtonTransform
             self.clonedTabsButton?.transform = tabsButtonTransform
             self.rightBarConstraint?.updateOffset(URLBarViewUX.URLBarCurveOffset + URLBarViewUX.URLBarCurveBounceBuffer + tabsButton.frame.width)
@@ -463,9 +463,9 @@ class URLBarView: UIView {
                 make.top.bottom.trailing.equalTo(self.locationContainer)
             }
         } else {
-            self.tabsButton.transform = CGAffineTransformIdentity
-            self.clonedTabsButton?.transform = CGAffineTransformIdentity
-            self.cancelButton.transform = CGAffineTransformMakeTranslation(self.cancelButton.frame.width, 0)
+            self.tabsButton.transform = CGAffineTransform.identity
+            self.clonedTabsButton?.transform = CGAffineTransform.identity
+            self.cancelButton.transform = CGAffineTransform(translationX: self.cancelButton.frame.width, y: 0)
             self.rightBarConstraint?.updateOffset(defaultRightOffset)
 
             // Shrink the editable text field back to the size of the location view before hiding it.
@@ -476,12 +476,12 @@ class URLBarView: UIView {
     }
 
     func updateViewsForOverlayModeAndToolbarChanges() {
-        self.cancelButton.hidden = !inOverlayMode
-        self.shareButton.hidden = !self.toolbarIsShowing || inOverlayMode
-        self.bookmarkButton.hidden = !self.toolbarIsShowing || inOverlayMode
-        self.forwardButton.hidden = !self.toolbarIsShowing || inOverlayMode
-        self.backButton.hidden = !self.toolbarIsShowing || inOverlayMode
-        self.stopReloadButton.hidden = inOverlayMode
+        self.cancelButton.isHidden = !inOverlayMode
+        self.shareButton.isHidden = !self.toolbarIsShowing || inOverlayMode
+        self.bookmarkButton.isHidden = !self.toolbarIsShowing || inOverlayMode
+        self.forwardButton.isHidden = !self.toolbarIsShowing || inOverlayMode
+        self.backButton.isHidden = !self.toolbarIsShowing || inOverlayMode
+        self.stopReloadButton.isHidden = inOverlayMode
     }
 
     func animateToOverlayState(overlayMode overlay: Bool, didCancel cancel: Bool = false) {
@@ -494,7 +494,7 @@ class URLBarView: UIView {
             removeLocationTextField()
         }
 
-        UIView.animateWithDuration(0.3, delay: 0.0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0.0, options: [], animations: { _ in
+        UIView.animate(withDuration: 0.3, delay: 0.0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0.0, options: [], animations: { _ in
             self.transitionToOverlay(cancel)
             self.setNeedsUpdateConstraints()
             self.layoutIfNeeded()
@@ -517,34 +517,34 @@ class URLBarView: UIView {
 }
 
 extension URLBarView: BrowserToolbarProtocol {
-    func updateBackStatus(canGoBack: Bool) {
-        backButton.enabled = canGoBack
+    func updateBackStatus(_ canGoBack: Bool) {
+        backButton.isEnabled = canGoBack
     }
 
-    func updateForwardStatus(canGoForward: Bool) {
-        forwardButton.enabled = canGoForward
+    func updateForwardStatus(_ canGoForward: Bool) {
+        forwardButton.isEnabled = canGoForward
     }
 
-    func updateBookmarkStatus(isBookmarked: Bool) {
-        bookmarkButton.selected = isBookmarked
+    func updateBookmarkStatus(_ isBookmarked: Bool) {
+        bookmarkButton.isSelected = isBookmarked
         getApp().braveTopViewController.updateBookmarkStatus(isBookmarked)
     }
 
-    func updateReloadStatus(isLoading: Bool) {
+    func updateReloadStatus(_ isLoading: Bool) {
         helper?.updateReloadStatus(isLoading)
         if isLoading {
-            stopReloadButton.setImage(helper?.ImageStop, forState: .Normal)
-            stopReloadButton.setImage(helper?.ImageStopPressed, forState: .Highlighted)
+            stopReloadButton.setImage(helper?.ImageStop, for: UIControlState())
+            stopReloadButton.setImage(helper?.ImageStopPressed, for: .highlighted)
         } else {
-            stopReloadButton.setImage(helper?.ImageReload, forState: .Normal)
-            stopReloadButton.setImage(helper?.ImageReloadPressed, forState: .Highlighted)
+            stopReloadButton.setImage(helper?.ImageReload, for: UIControlState())
+            stopReloadButton.setImage(helper?.ImageReloadPressed, for: .highlighted)
         }
     }
 
-    func updatePageStatus(isWebPage isWebPage: Bool) {
-        bookmarkButton.enabled = isWebPage
-        stopReloadButton.enabled = isWebPage
-        shareButton.enabled = isWebPage
+    func updatePageStatus(isWebPage: Bool) {
+        bookmarkButton.isEnabled = isWebPage
+        stopReloadButton.isEnabled = isWebPage
+        shareButton.isEnabled = isWebPage
     }
 
     override var accessibilityElements: [AnyObject]? {
@@ -567,52 +567,52 @@ extension URLBarView: BrowserToolbarProtocol {
 }
 
 extension URLBarView: BrowserLocationViewDelegate {
-    func browserLocationViewDidLongPressReaderMode(browserLocationView: BrowserLocationView) -> Bool {
+    func browserLocationViewDidLongPressReaderMode(_ browserLocationView: BrowserLocationView) -> Bool {
         return delegate?.urlBarDidLongPressReaderMode(self) ?? false
     }
 
-    func browserLocationViewDidTapLocation(browserLocationView: BrowserLocationView) {
-        let locationText = delegate?.urlBarDisplayTextForURL(locationView.url)
+    func browserLocationViewDidTapLocation(_ browserLocationView: BrowserLocationView) {
+        let locationText = delegate?.urlBarDisplayTextForURL(locationView.url as URL?)
         enterOverlayMode(locationText, pasted: false)
     }
 
-    func browserLocationViewDidLongPressLocation(browserLocationView: BrowserLocationView) {
+    func browserLocationViewDidLongPressLocation(_ browserLocationView: BrowserLocationView) {
         delegate?.urlBarDidLongPressLocation(self)
     }
 
-    func browserLocationViewDidTapReload(browserLocationView: BrowserLocationView) {
+    func browserLocationViewDidTapReload(_ browserLocationView: BrowserLocationView) {
         delegate?.urlBarDidPressReload(self)
     }
     
-    func browserLocationViewDidTapStop(browserLocationView: BrowserLocationView) {
+    func browserLocationViewDidTapStop(_ browserLocationView: BrowserLocationView) {
         delegate?.urlBarDidPressStop(self)
     }
 
-    func browserLocationViewDidTapReaderMode(browserLocationView: BrowserLocationView) {
+    func browserLocationViewDidTapReaderMode(_ browserLocationView: BrowserLocationView) {
         delegate?.urlBarDidPressReaderMode(self)
     }
 
-    func browserLocationViewLocationAccessibilityActions(browserLocationView: BrowserLocationView) -> [UIAccessibilityCustomAction]? {
+    func browserLocationViewLocationAccessibilityActions(_ browserLocationView: BrowserLocationView) -> [UIAccessibilityCustomAction]? {
         return delegate?.urlBarLocationAccessibilityActions(self)
     }
 }
 
 extension URLBarView: AutocompleteTextFieldDelegate {
-    func autocompleteTextFieldShouldReturn(autocompleteTextField: AutocompleteTextField) -> Bool {
+    func autocompleteTextFieldShouldReturn(_ autocompleteTextField: AutocompleteTextField) -> Bool {
         guard let text = locationTextField?.text else { return true }
         delegate?.urlBar(self, didSubmitText: text)
         return true
     }
 
-    func autocompleteTextField(autocompleteTextField: AutocompleteTextField, didEnterText text: String) {
+    func autocompleteTextField(_ autocompleteTextField: AutocompleteTextField, didEnterText text: String) {
         delegate?.urlBar(self, didEnterText: text)
     }
 
-    func autocompleteTextFieldDidBeginEditing(autocompleteTextField: AutocompleteTextField) {
+    func autocompleteTextFieldDidBeginEditing(_ autocompleteTextField: AutocompleteTextField) {
         autocompleteTextField.highlightAll()
     }
 
-    func autocompleteTextFieldShouldClear(autocompleteTextField: AutocompleteTextField) -> Bool {
+    func autocompleteTextFieldShouldClear(_ autocompleteTextField: AutocompleteTextField) -> Bool {
         delegate?.urlBar(self, didEnterText: "")
         return true
     }
@@ -622,8 +622,8 @@ extension URLBarView: AutocompleteTextFieldDelegate {
 extension URLBarView {
 
     dynamic var cancelTextColor: UIColor? {
-        get { return cancelButton.titleColorForState(UIControlState.Normal) }
-        set { return cancelButton.setTitleColor(newValue, forState: UIControlState.Normal) }
+        get { return cancelButton.titleColor(for: UIControlState()) }
+        set { return cancelButton.setTitleColor(newValue, for: UIControlState()) }
     }
 
     dynamic var actionButtonTintColor: UIColor? {
@@ -638,7 +638,7 @@ extension URLBarView {
 
 extension URLBarView: Themeable {
     
-    func applyTheme(themeName: String) {
+    func applyTheme(_ themeName: String) {
         locationView.applyTheme(themeName)
         locationTextField?.applyTheme(themeName)
 
@@ -665,14 +665,14 @@ class ToolbarTextField: AutocompleteTextField {
         var themes = [String: Theme]()
         var theme = Theme()
         theme.backgroundColor = UIConstants.PrivateModeLocationBackgroundColor
-        theme.textColor = UIColor.whiteColor()
-        theme.buttonTintColor = UIColor.whiteColor()
+        theme.textColor = UIColor.white
+        theme.buttonTintColor = UIColor.white
         theme.highlightColor = UIConstants.PrivateModeTextHighlightColor
         themes[Theme.PrivateMode] = theme
 
         theme = Theme()
-        theme.backgroundColor = UIColor.whiteColor()
-        theme.textColor = UIColor.blackColor()
+        theme.backgroundColor = UIColor.white
+        theme.textColor = UIColor.black
         theme.highlightColor = AutocompleteTextFieldUX.HighlightColor
         themes[Theme.NormalMode] = theme
 
@@ -687,7 +687,7 @@ class ToolbarTextField: AutocompleteTextField {
         }
     }
 
-    private var tintedClearImage: UIImage?
+    fileprivate var tintedClearImage: UIImage?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -705,47 +705,47 @@ class ToolbarTextField: AutocompleteTextField {
         // http://stackoverflow.com/questions/27944781/how-to-change-the-tint-color-of-the-clear-button-on-a-uitextfield
         for view in subviews as [UIView] {
             if let button = view as? UIButton {
-                if let image = button.imageForState(.Normal) {
+                if let image = button.image(for: UIControlState()) {
                     if tintedClearImage == nil {
                         tintedClearImage = tintImage(image, color: clearButtonTintColor)
                     }
 
                     if button.imageView?.image != tintedClearImage {
-                        button.setImage(tintedClearImage, forState: .Normal)
+                        button.setImage(tintedClearImage, for: UIControlState())
                     }
                 }
             }
         }
     }
 
-    private func tintImage(image: UIImage, color: UIColor?) -> UIImage {
+    fileprivate func tintImage(_ image: UIImage, color: UIColor?) -> UIImage {
         guard let color = color else { return image }
 
         let size = image.size
 
         UIGraphicsBeginImageContextWithOptions(size, false, 2)
         let context = UIGraphicsGetCurrentContext()
-        image.drawAtPoint(CGPointZero, blendMode: CGBlendMode.Normal, alpha: 1.0)
+        image.draw(at: CGPoint.zero, blendMode: CGBlendMode.normal, alpha: 1.0)
 
-        CGContextSetFillColorWithColor(context, color.CGColor)
-        CGContextSetBlendMode(context, CGBlendMode.SourceIn)
-        CGContextSetAlpha(context, 1.0)
+        context?.setFillColor(color.cgColor)
+        context?.setBlendMode(CGBlendMode.sourceIn)
+        context?.setAlpha(1.0)
 
-        let rect = CGRectMake(
-            CGPointZero.x,
-            CGPointZero.y,
-            image.size.width,
-            image.size.height)
-        CGContextFillRect(UIGraphicsGetCurrentContext(), rect)
+        let rect = CGRect(
+            x: CGPoint.zero.x,
+            y: CGPoint.zero.y,
+            width: image.size.width,
+            height: image.size.height)
+        UIGraphicsGetCurrentContext()?.fill(rect)
         let tintedImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         
-        return tintedImage
+        return tintedImage!
     }
 }
 
 extension ToolbarTextField: Themeable {
-    func applyTheme(themeName: String) {
+    func applyTheme(_ themeName: String) {
         guard let theme = ToolbarTextField.Themes[themeName] else {
             log.error("Unable to apply unknown theme \(themeName)")
             return

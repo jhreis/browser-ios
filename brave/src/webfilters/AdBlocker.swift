@@ -13,7 +13,7 @@ class AdBlocker {
     lazy var abpFilterLibWrapper: ABPFilterLibWrapper = { return ABPFilterLibWrapper() }()
 
     lazy var networkFileLoader: NetworkDataFileLoader = {
-        let dataUrl = NSURL(string: "https://s3.amazonaws.com/adblock-data/\(dataVersion)/ABPFilterParserData.dat")!
+        let dataUrl = URL(string: "https://s3.amazonaws.com/adblock-data/\(dataVersion)/ABPFilterParserData.dat")!
         let dataFile = "abp-data-\(dataVersion).dat"
         let loader = NetworkDataFileLoader(url: dataUrl, file: dataFile, localDirName: "abp-data")
         loader.delegate = self
@@ -23,8 +23,8 @@ class AdBlocker {
     var fifoCacheOfUrlsChecked = FifoDict()
     var isNSPrefEnabled = true
 
-    private init() {
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(AdBlocker.prefsChanged(_:)), name: NSUserDefaultsDidChangeNotification, object: nil)
+    fileprivate init() {
+        NotificationCenter.default.addObserver(self, selector: #selector(AdBlocker.prefsChanged(_:)), name: UserDefaults.didChangeNotification, object: nil)
         updateEnabledState()
     }
 
@@ -36,12 +36,12 @@ class AdBlocker {
         isNSPrefEnabled = BraveApp.getPrefs()?.boolForKey(AdBlocker.prefKey) ?? AdBlocker.prefKeyDefaultValue
     }
 
-    @objc func prefsChanged(info: NSNotification) {
+    @objc func prefsChanged(_ info: Notification) {
         updateEnabledState()
     }
 
     // We can add whitelisting logic here for puzzling adblock problems
-    private func isWhitelistedUrl(url: String, forMainDocDomain domain: String) -> Bool {
+    fileprivate func isWhitelistedUrl(_ url: String, forMainDocDomain domain: String) -> Bool {
         // https://github.com/brave/browser-ios/issues/89
         if domain.contains("yahoo") && url.contains("s.yimg.com/zz/combo") {
             return true
@@ -51,8 +51,8 @@ class AdBlocker {
 
     func setForbesCookie() {
         let cookieName = "forbes bypass"
-        let storage = NSHTTPCookieStorage.sharedHTTPCookieStorage()
-        let existing = storage.cookiesForURL(NSURL(string: "http://www.forbes.com")!)
+        let storage = HTTPCookieStorage.shared
+        let existing = storage.cookies(for: URL(string: "http://www.forbes.com")!)
         if let existing = existing {
             for c in existing {
                 if c.name == cookieName {
@@ -62,28 +62,28 @@ class AdBlocker {
         }
 
         var dict: [String:AnyObject] = [:]
-        dict[NSHTTPCookiePath] = "/"
-        dict[NSHTTPCookieName] = cookieName
-        dict[NSHTTPCookieValue] = "forbes_ab=true; welcomeAd=true; adblock_session=Off; dailyWelcomeCookie=true"
-        dict[NSHTTPCookieDomain] = "www.forbes.com"
+        dict[HTTPCookiePropertyKey.path] = "/"
+        dict[HTTPCookiePropertyKey.name] = cookieName
+        dict[HTTPCookiePropertyKey.value] = "forbes_ab=true; welcomeAd=true; adblock_session=Off; dailyWelcomeCookie=true"
+        dict[HTTPCookiePropertyKey.domain] = "www.forbes.com"
 
-        let components: NSDateComponents = NSDateComponents()
-        components.setValue(1, forComponent: NSCalendarUnit.Month);
-        dict[NSHTTPCookieExpires] = NSCalendar.currentCalendar().dateByAddingComponents(components, toDate: NSDate(), options: NSCalendarOptions(rawValue: 0))
+        let components: DateComponents = DateComponents()
+        (components as NSDateComponents).setValue(1, forComponent: NSCalendar.Unit.month);
+        dict[HTTPCookiePropertyKey.expires] = (Calendar.current as NSCalendar).date(byAdding: components, to: Date(), options: NSCalendar.Options(rawValue: 0))
 
-        let newCookie = NSHTTPCookie(properties: dict)
+        let newCookie = HTTPCookie(properties: dict as! [HTTPCookiePropertyKey : Any])
         if let c = newCookie {
             storage.setCookie(c)
         }
     }
 
     class RedirectLoopGuard {
-        let timeWindow: NSTimeInterval // seconds
+        let timeWindow: TimeInterval // seconds
         let maxRedirects: Int
-        var startTime = NSDate()
+        var startTime = Date()
         var redirects = 0
 
-        init(timeWindow: NSTimeInterval, maxRedirects: Int) {
+        init(timeWindow: TimeInterval, maxRedirects: Int) {
             self.timeWindow = timeWindow
             self.maxRedirects = maxRedirects
         }
@@ -93,8 +93,8 @@ class AdBlocker {
         }
 
         func increment() {
-            let time = NSDate()
-            if time.timeIntervalSinceDate(startTime) > timeWindow {
+            let time = Date()
+            if time.timeIntervalSince(startTime) > timeWindow {
                 startTime = time
                 redirects = 0
             }
@@ -106,12 +106,12 @@ class AdBlocker {
     // Set the window as 10x in 10sec, after that stop forwarding the page.
     var forbesRedirectGuard = RedirectLoopGuard(timeWindow: 10.0, maxRedirects: 10)
 
-    func shouldBlock(request: NSURLRequest) -> Bool {
+    func shouldBlock(_ request: URLRequest) -> Bool {
         // synchronize code from this point on.
         objc_sync_enter(self)
         defer { objc_sync_exit(self) }
 
-        guard let url = request.URL else {
+        guard let url = request.url else {
                 return false
         }
 
@@ -123,7 +123,7 @@ class AdBlocker {
                 if !forbesRedirectGuard.isLooping() {
                     postAsyncToMain(0.5) {
                         /* For some reason, even with the cookie set, I can't get past the welcome page, until I manually load a page on forbes. So if a do a google search for a subpage on forbes, I can click on that and get to forbes, and from that point on, I no longer see the welcome page. This hack seems to work perfectly for duplicating that behaviour. */
-                        BraveApp.getCurrentWebView()?.loadRequest(NSURLRequest(URL: NSURL(string: "http://www.forbes.com")!))
+                        BraveApp.getCurrentWebView()?.loadRequest(URLRequest(url: URL(string: "http://www.forbes.com")!))
                     }
                 }
             }
@@ -158,7 +158,7 @@ class AdBlocker {
 
         let isBlocked = abpFilterLibWrapper.isBlockedConsideringType(url.absoluteString,
                                                                      mainDocumentUrl: mainDocDomain,
-                                                                     acceptHTTPHeader:request.valueForHTTPHeaderField("Accept"))
+                                                                     acceptHTTPHeader:request.value(forHTTPHeaderField: "Accept"))
 
         fifoCacheOfUrlsChecked.addItem(key, value: isBlocked)
 
@@ -174,7 +174,7 @@ class AdBlocker {
 
 extension AdBlocker: NetworkDataFileLoaderDelegate {
     
-    func fileLoader(_: NetworkDataFileLoader, setDataFile data: NSData?) {
+    func fileLoader(_: NetworkDataFileLoader, setDataFile data: Data?) {
         abpFilterLibWrapper.setDataFile(data)
     }
     
