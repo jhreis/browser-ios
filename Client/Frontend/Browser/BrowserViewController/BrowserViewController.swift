@@ -918,21 +918,24 @@ class BrowserViewController: UIViewController {
 
         helper = ShareExtensionHelper(url: url, tab: tab, activities: activities)
         let controller = helper.createActivityViewController({ [unowned self] completed in
-            // After dismissing, check to see if there were any prompts we queued up
-            self.showQueuedAlertIfAvailable()
+            dispatch_async(dispatch_get_main_queue(), {
+                // After dismissing, check to see if there were any prompts we queued up
+                self.showQueuedAlertIfAvailable()
 
-            // Usually the popover delegate would handle nil'ing out the references we have to it
-            // on the BVC when displaying as a popover but the delegate method doesn't seem to be
-            // invoked on iOS 10. See Bug 1297768 for additional details.
-            self.displayedPopoverController = nil
-            self.updateDisplayedPopoverProperties = nil
+                // Usually the popover delegate would handle nil'ing out the references we have to it
+                // on the BVC when displaying as a popover but the delegate method doesn't seem to be
+                // invoked on iOS 10. See Bug 1297768 for additional details.
+                self.displayedPopoverController = nil
+                self.updateDisplayedPopoverProperties = nil
+                self.helper = nil
 
-            if completed {
-                // We don't know what share action the user has chosen so we simply always
-                // update the toolbar and reader mode bar to reflect the latest status.
-                self.updateURLBarDisplayURL(tab)
-                self.updateReaderModeBar()
-            }
+                if completed {
+                    // We don't know what share action the user has chosen so we simply always
+                    // update the toolbar and reader mode bar to reflect the latest status.
+                    self.updateURLBarDisplayURL(tab)
+                    self.updateReaderModeBar()
+                }
+            })
         })
 
         let setupPopover = { [unowned self] in
