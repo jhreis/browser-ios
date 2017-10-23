@@ -1,8 +1,0 @@
-github
-infogalactic
-qwant
-semanticscholar
-stackoverflow
-startpage
-wolframalpha
-youtube

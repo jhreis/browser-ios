@@ -1,8 +1,0 @@
-duckduckgo
-amazon-in
-bing
-eBay-in
-google
-wikipedia-ta
-wiktionary-ta
-yahoo-in
