@@ -1,7 +1,0 @@
-duckduckgo
-bing
-eBay-in
-google
-twitter
-wikipedia-ml
-yahoo-in

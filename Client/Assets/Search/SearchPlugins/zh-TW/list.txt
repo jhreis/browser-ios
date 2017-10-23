@@ -1,4 +1,0 @@
-bing
-duckduckgo
-google
-wikipedia-zh-TW

@@ -1,7 +1,0 @@
-duckduckgo
-bing
-google
-reta-vortaro
-twitter
-wikipedia-eo
-yahoo

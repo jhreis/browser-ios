@@ -1,3 +1,0 @@
-# Put in .git/hooks to run tests after commit
-SCHEME="Brave"
-xcodebuild GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO -scheme $SCHEME test -destination 'platform=iOS Simulator,name=iPhone 7' 

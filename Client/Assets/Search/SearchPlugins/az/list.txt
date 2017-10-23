@@ -1,6 +1,0 @@
-duckduckgo
-amazondotcom
-azerdict
-bing
-google
-wikipedia-az

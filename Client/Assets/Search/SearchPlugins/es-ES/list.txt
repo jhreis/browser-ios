@@ -1,6 +1,0 @@
-duckduckgo
-bing
-google
-twitter
-wikipedia-es
-yahoo-es

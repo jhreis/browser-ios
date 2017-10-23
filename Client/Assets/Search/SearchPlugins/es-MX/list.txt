@@ -1,8 +1,0 @@
-duckduckgo
-amazondotcom
-bing
-google
-mercadolibre-mx
-twitter
-wikipedia-es
-yahoo-mx
